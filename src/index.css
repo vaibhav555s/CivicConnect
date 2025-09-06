@@ -62,6 +62,14 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
+  
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
 
   @media (max-width: 768px) {
     .text-display {

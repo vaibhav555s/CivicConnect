@@ -9,11 +9,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'My App',
-        short_name: 'App',
-        description: 'My awesome PWA built with React + Vite',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
+        name: 'CivicConnect',
+        short_name: 'CivicConnect',
+        description: 'Report and track civic issues in your community',
+        theme_color: '#000000',
+        background_color: '#FAFAFA',
         display: 'standalone',
         scope: '/',
         start_url: '/',
