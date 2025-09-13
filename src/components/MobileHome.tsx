@@ -18,9 +18,10 @@ interface WeatherData {
 
 interface MobileHomeProps {
   onNavigate: (tab: string) => void;
+  onAuthRequired: () => void;
 }
 
-const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate }) => {
+const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate, onAuthRequired }) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -90,7 +91,7 @@ const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate }) => {
         {/* Hero Button with micro-interaction */}
         <div className="mb-14 animate-fade-in-delay">
           <button
-            onClick={() => onNavigate("report")}
+            onClick={() => onAuthRequired()}
             className="group w-full bg-black text-white py-5 rounded-2xl text-xl font-semibold hover:bg-gray-900 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
           >
             <div className="flex items-center justify-center space-x-3">

@@ -15,13 +15,16 @@ import {
   Plus,
   X,
 } from "lucide-react";
+import ProtectedRoute from './auth/ProtectedRoute';
 
 interface MobileReportSectionProps {
   onBack: () => void;
+  onAuthRequired: () => void;
 }
 
 const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   onBack,
+  onAuthRequired,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [title, setTitle] = useState<string>("");
@@ -342,392 +345,394 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   }
 
   return (
-    <section className="min-h-screen bg-surface">
-      <div className="max-w-lg mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-borders">
-          <button
-            onClick={onBack}
-            className="p-2 hover:bg-subtle rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-text-secondary" />
-          </button>
-          <h1 className="text-lg font-semibold text-accent">Report Issue</h1>
-          <div className="w-9"></div>
-        </div>
+    <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
+      <section className="min-h-screen bg-surface">
+        <div className="max-w-lg mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-borders">
+            <button
+              onClick={onBack}
+              className="p-2 hover:bg-subtle rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            </button>
+            <h1 className="text-lg font-semibold text-accent">Report Issue</h1>
+            <div className="w-9"></div>
+          </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-10">
-          {/* Modern Issue Title - No Border Style */}
-          <div>
-            <label className="block text-caption mb-6">What's the issue?</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Enter issue title"
-                className="w-full text-2xl font-bold text-accent bg-transparent border-none outline-none placeholder-text-secondary/50 pb-3 border-b-2 border-borders focus:border-accent transition-colors"
-                required
+          <form onSubmit={handleSubmit} className="p-6 space-y-10">
+            {/* Modern Issue Title - No Border Style */}
+            <div>
+              <label className="block text-caption mb-6">What's the issue?</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter issue title"
+                  className="w-full text-2xl font-bold text-accent bg-transparent border-none outline-none placeholder-text-secondary/50 pb-3 border-b-2 border-borders focus:border-accent transition-colors"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Category Selection */}
+            <div>
+              <label className="block text-caption mb-4">Select Category</label>
+              <div className="grid grid-cols-1 gap-3">
+                {categories.map((category) => {
+                  const IconComponent = category.icon;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`p-4 border rounded-xl transition-all duration-200 text-left ${
+                        selectedCategory === category.id
+                          ? "border-accent bg-subtle shadow-sm"
+                          : "border-borders hover:border-accent hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color}`}
+                        >
+                          <IconComponent className="w-6 h-6" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-accent">
+                            {category.title}
+                          </div>
+                          <div className="text-xs text-text-secondary mt-1">
+                            {category.department}
+                          </div>
+                          <div className="text-xs text-text-secondary mt-1">
+                            {category.examples}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-caption mb-4">
+                Detailed Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full h-32 p-4 input-field rounded-xl resize-none"
+                placeholder="Provide more details about the issue..."
               />
             </div>
-          </div>
 
-          {/* Category Selection */}
-          <div>
-            <label className="block text-caption mb-4">Select Category</label>
-            <div className="grid grid-cols-1 gap-3">
-              {categories.map((category) => {
-                const IconComponent = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`p-4 border rounded-xl transition-all duration-200 text-left ${
-                      selectedCategory === category.id
-                        ? "border-accent bg-subtle shadow-sm"
-                        : "border-borders hover:border-accent hover:shadow-sm"
-                    }`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color}`}
-                      >
-                        <IconComponent className="w-6 h-6" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-semibold text-accent">
-                          {category.title}
-                        </div>
-                        <div className="text-xs text-text-secondary mt-1">
-                          {category.department}
-                        </div>
-                        <div className="text-xs text-text-secondary mt-1">
-                          {category.examples}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            {/* Multiple Photo Upload */}
+            <div>
+              <label className="block text-caption mb-4">
+                Add Photos ({selectedImages.length}/5)
+              </label>
 
-          {/* Description */}
-          <div>
-            <label className="block text-caption mb-4">
-              Detailed Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full h-32 p-4 input-field rounded-xl resize-none"
-              placeholder="Provide more details about the issue..."
-            />
-          </div>
-
-          {/* Multiple Photo Upload */}
-          <div>
-            <label className="block text-caption mb-4">
-              Add Photos ({selectedImages.length}/5)
-            </label>
-
-            {/* Photo Grid */}
-            {imagePreviews.length > 0 && (
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                {imagePreviews.map((preview, index) => (
-                  <div
-                    key={index}
-                    className="relative aspect-square rounded-xl overflow-hidden border border-borders"
-                  >
-                    <img
-                      src={preview}
-                      alt={`Photo ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
+              {/* Photo Grid */}
+              {imagePreviews.length > 0 && (
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  {imagePreviews.map((preview, index) => (
+                    <div
+                      key={index}
+                      className="relative aspect-square rounded-xl overflow-hidden border border-borders"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add Photo Button */}
-            {selectedImages.length < 5 && (
-              <button
-                type="button"
-                onClick={() => setShowPhotoOptions(true)}
-                className="w-full p-4 border-2 border-dashed border-borders rounded-xl hover:border-accent hover:bg-subtle/30 transition-colors flex items-center justify-center space-x-3"
-              >
-                <Camera className="w-6 h-6 text-text-secondary" />
-                <div>
-                  <div className="font-medium text-accent">Add Photos</div>
-                  <div className="text-sm text-text-secondary">
-                    Camera or Gallery
-                  </div>
-                </div>
-              </button>
-            )}
-
-            {/* Mobile Photo Options Modal */}
-            {showPhotoOptions && (
-              <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
-                <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 space-y-3">
-                  <div className="text-center mb-4">
-                    <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
-                    <h3 className="font-semibold text-accent">Add Photo</h3>
-                    <p className="text-sm text-text-secondary">
-                      Choose how to add your photo
-                    </p>
-                  </div>
-
-                  {/* Camera Option */}
-                  <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <Camera className="w-6 h-6 text-blue-600" />
+                      <img
+                        src={preview}
+                        alt={`Photo ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
                     </div>
-                    <div>
-                      <div className="font-medium text-accent">Take Photo</div>
-                      <div className="text-sm text-text-secondary">
-                        Use camera to capture
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={(e) => {
-                        handleImageSelect(e);
-                        setShowPhotoOptions(false);
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-
-                  {/* Gallery Option */}
-                  <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
-                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                      <Upload className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-accent">
-                        Choose from Gallery
-                      </div>
-                      <div className="text-sm text-text-secondary">
-                        Select existing photos
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => {
-                        handleImageSelect(e);
-                        setShowPhotoOptions(false);
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-
-                  {/* Cancel */}
-                  <button
-                    type="button"
-                    onClick={() => setShowPhotoOptions(false)}
-                    className="w-full p-4 text-center text-text-secondary hover:text-accent transition-colors"
-                  >
-                    Cancel
-                  </button>
+                  ))}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Photo Instructions */}
-            <p className="text-xs text-text-secondary mt-3">
-              📸 Upload up to 5 photos • Clear images help authorities resolve
-              issues faster
-            </p>
-          </div>
-
-          {/* Enhanced Location */}
-          <div>
-            <label className="block text-caption mb-4">Location</label>
-
-            {/* Location Permission States */}
-            {locationPermissionStatus === "requesting" && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <div className="text-center">
-                  <div className="text-sm font-medium text-blue-900 mb-2">
-                    Requesting Location Permission
-                  </div>
-                  <div className="text-xs text-blue-700">
-                    Please allow location access in your browser
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {locationPermissionStatus === "denied" && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div className="text-center">
-                  <div className="text-sm font-medium text-red-900 mb-2">
-                    Location Permission Denied
-                  </div>
-                  <div className="text-xs text-red-700 mb-3">
-                    Please enable location in your browser settings and try
-                    again
-                  </div>
-                  <button
-                    type="button"
-                    onClick={getCurrentLocation}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!location &&
-              locationPermissionStatus !== "requesting" &&
-              locationPermissionStatus !== "denied" && (
+              {/* Add Photo Button */}
+              {selectedImages.length < 5 && (
                 <button
                   type="button"
-                  onClick={getCurrentLocation}
-                  disabled={locationLoading}
-                  className="w-full p-4 border border-borders rounded-xl hover:border-accent transition-colors text-left"
+                  onClick={() => setShowPhotoOptions(true)}
+                  className="w-full p-4 border-2 border-dashed border-borders rounded-xl hover:border-accent hover:bg-subtle/30 transition-colors flex items-center justify-center space-x-3"
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                      <MapPin className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <div className="font-medium text-accent">
-                        {locationLoading
-                          ? "Getting location..."
-                          : "Use Current Location"}
-                      </div>
-                      <div className="text-sm text-text-secondary">
-                        {locationLoading
-                          ? "Please wait..."
-                          : "Tap to capture your exact location"}
-                      </div>
+                  <Camera className="w-6 h-6 text-text-secondary" />
+                  <div>
+                    <div className="font-medium text-accent">Add Photos</div>
+                    <div className="text-sm text-text-secondary">
+                      Camera or Gallery
                     </div>
                   </div>
                 </button>
               )}
 
-            {location && (
-              <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
-                      <MapPin className="w-5 h-5 text-emerald-600" />
+              {/* Mobile Photo Options Modal */}
+              {showPhotoOptions && (
+                <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+                  <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 space-y-3">
+                    <div className="text-center mb-4">
+                      <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                      <h3 className="font-semibold text-accent">Add Photo</h3>
+                      <p className="text-sm text-text-secondary">
+                        Choose how to add your photo
+                      </p>
                     </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-emerald-900 mb-2">
-                        📍 Location Captured
+
+                    {/* Camera Option */}
+                    <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <Camera className="w-6 h-6 text-blue-600" />
                       </div>
-
-                      {/* Street Address */}
-                      {(location.houseNumber || location.street) && (
-                        <div className="mb-1">
-                          <span className="text-sm font-medium text-emerald-800">
-                            {[location.houseNumber, location.street]
-                              .filter(Boolean)
-                              .join(" ")}
-                          </span>
+                      <div>
+                        <div className="font-medium text-accent">Take Photo</div>
+                        <div className="text-sm text-text-secondary">
+                          Use camera to capture
                         </div>
-                      )}
-
-                      {/* Area/Neighbourhood */}
-                      {location.neighbourhood && (
-                        <div className="text-sm text-emerald-700 mb-1">
-                          🏠 {location.neighbourhood}
-                        </div>
-                      )}
-
-                      {/* City, State, Postcode */}
-                      <div className="text-sm text-emerald-700 mb-1">
-                        🏙️{" "}
-                        {[location.city, location.state, location.postcode]
-                          .filter(Boolean)
-                          .join(", ")}
                       </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={(e) => {
+                          handleImageSelect(e);
+                          setShowPhotoOptions(false);
+                        }}
+                        className="hidden"
+                      />
+                    </label>
 
-                      {/* Full Address */}
-                      {location.fullAddress && (
-                        <div className="text-xs text-emerald-600 bg-emerald-100 rounded-lg px-2 py-1 mt-2">
-                          <strong>Complete Address:</strong>
-                          <br />
-                          {location.fullAddress}
-                        </div>
-                      )}
-
-                      {/* Coordinates */}
-                      <div className="text-xs text-emerald-500 mt-2">
-                        📐 {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                    {/* Gallery Option */}
+                    <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                      <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <Upload className="w-6 h-6 text-green-600" />
                       </div>
+                      <div>
+                        <div className="font-medium text-accent">
+                          Choose from Gallery
+                        </div>
+                        <div className="text-sm text-text-secondary">
+                          Select existing photos
+                        </div>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          handleImageSelect(e);
+                          setShowPhotoOptions(false);
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+
+                    {/* Cancel */}
+                    <button
+                      type="button"
+                      onClick={() => setShowPhotoOptions(false)}
+                      className="w-full p-4 text-center text-text-secondary hover:text-accent transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Photo Instructions */}
+              <p className="text-xs text-text-secondary mt-3">
+                📸 Upload up to 5 photos • Clear images help authorities resolve
+                issues faster
+              </p>
+            </div>
+
+            {/* Enhanced Location */}
+            <div>
+              <label className="block text-caption mb-4">Location</label>
+
+              {/* Location Permission States */}
+              {locationPermissionStatus === "requesting" && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-blue-900 mb-2">
+                      Requesting Location Permission
+                    </div>
+                    <div className="text-xs text-blue-700">
+                      Please allow location access in your browser
                     </div>
                   </div>
+                </div>
+              )}
+
+              {locationPermissionStatus === "denied" && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <div className="text-center">
+                    <div className="text-sm font-medium text-red-900 mb-2">
+                      Location Permission Denied
+                    </div>
+                    <div className="text-xs text-red-700 mb-3">
+                      Please enable location in your browser settings and try
+                      again
+                    </div>
+                    <button
+                      type="button"
+                      onClick={getCurrentLocation}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!location &&
+                locationPermissionStatus !== "requesting" &&
+                locationPermissionStatus !== "denied" && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setLocation(null);
-                      setLocationPermissionStatus("idle");
-                    }}
-                    className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    onClick={getCurrentLocation}
+                    disabled={locationLoading}
+                    className="w-full p-4 border border-borders rounded-xl hover:border-accent transition-colors text-left"
                   >
-                    Change
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-accent">
+                          {locationLoading
+                            ? "Getting location..."
+                            : "Use Current Location"}
+                        </div>
+                        <div className="text-sm text-text-secondary">
+                          {locationLoading
+                            ? "Please wait..."
+                            : "Tap to capture your exact location"}
+                        </div>
+                      </div>
+                    </div>
                   </button>
+                )}
+
+              {location && (
+                <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
+                        <MapPin className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-emerald-900 mb-2">
+                          📍 Location Captured
+                        </div>
+
+                        {/* Street Address */}
+                        {(location.houseNumber || location.street) && (
+                          <div className="mb-1">
+                            <span className="text-sm font-medium text-emerald-800">
+                              {[location.houseNumber, location.street]
+                                .filter(Boolean)
+                                .join(" ")}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Area/Neighbourhood */}
+                        {location.neighbourhood && (
+                          <div className="text-sm text-emerald-700 mb-1">
+                            🏠 {location.neighbourhood}
+                          </div>
+                        )}
+
+                        {/* City, State, Postcode */}
+                        <div className="text-sm text-emerald-700 mb-1">
+                          🏙️{" "}
+                          {[location.city, location.state, location.postcode]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </div>
+
+                        {/* Full Address */}
+                        {location.fullAddress && (
+                          <div className="text-xs text-emerald-600 bg-emerald-100 rounded-lg px-2 py-1 mt-2">
+                            <strong>Complete Address:</strong>
+                            <br />
+                            {location.fullAddress}
+                          </div>
+                        )}
+
+                        {/* Coordinates */}
+                        <div className="text-xs text-emerald-500 mt-2">
+                          📐 {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLocation(null);
+                        setLocationPermissionStatus("idle");
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Change
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={submitting || !title || !selectedCategory}
-            className="w-full btn-primary py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-          >
-            {submitting ? (
-              <>
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                <span>Submitting Report...</span>
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                <span>Submit Report</span>
-              </>
-            )}
-          </button>
-        </form>
-      </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={submitting || !title || !selectedCategory}
+              className="w-full btn-primary py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+            >
+              {submitting ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Submitting Report...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  <span>Submit Report</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
 
-      {/* Custom animations */}
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
+        {/* Custom animations */}
+        <style jsx>{`
+          @keyframes fade-in {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
 
-        .animate-fade-in {
-          animation: fade-in 0.6s ease-out;
-        }
-      `}</style>
-    </section>
+          .animate-fade-in {
+            animation: fade-in 0.6s ease-out;
+          }
+        `}</style>
+      </section>
+    </ProtectedRoute>
   );
 };
 
