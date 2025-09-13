@@ -120,6 +120,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   };
 
   // Get detailed location with address
+  // Replace the getCurrentLocation function with this enhanced version:
+
   const getCurrentLocation = async () => {
     setLocationPermissionStatus("requesting");
     setLocationLoading(true);
@@ -136,37 +138,141 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
         const { latitude, longitude } = position.coords;
 
         try {
-          // Reverse geocoding to get detailed address
-          const response = await fetch(
+          // Using multiple geocoding APIs for better address details
+
+          // Primary: OpenStreetMap Nominatim (Free, detailed)
+          const nominatimResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&zoom=18`
+          );
+          const nominatimData = await nominatimResponse.json();
+
+          // Backup: BigDataCloud (Free, good fallback)
+          const bigDataResponse = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
           );
-          const data = await response.json();
+          const bigDataData = await bigDataResponse.json();
+
+          // Extract detailed address components
+          const address = nominatimData.address || {};
 
           const detailedLocation = {
             lat: latitude,
             lng: longitude,
-            address:
-              data.locality ||
-              data.city ||
-              `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
-            fullAddress: `${data.locality ? data.locality + ", " : ""}${
-              data.city || ""
-            }, ${data.principalSubdivision || ""}`.replace(/^,\s*|,\s*$/g, ""),
-            street: data.street || "",
-            area: data.locality || "",
+            // Street level details
+            houseNumber: address.house_number || "",
+            street: address.road || address.street || bigDataData.street || "",
+
+            // Area details
+            neighbourhood:
+              address.neighbourhood ||
+              address.suburb ||
+              bigDataData.locality ||
+              "",
+            area: address.suburb || address.village || address.town || "",
+
+            // City details
+            city:
+              address.city ||
+              address.town ||
+              address.village ||
+              bigDataData.city ||
+              "",
+            district:
+              address.state_district || bigDataData.principalSubdivision || "",
+            state: address.state || bigDataData.principalSubdivision || "",
+
+            // Postal code
+            postcode: address.postcode || bigDataData.postcode || "",
+
+            // Country
+            country: address.country || bigDataData.countryName || "India",
+
+            // Formatted addresses
+            shortAddress: "",
+            fullAddress: "",
+            displayAddress: "",
           };
 
+          // Create formatted addresses
+          const addressParts = [];
+
+          // Build street address
+          if (detailedLocation.houseNumber) {
+            addressParts.push(detailedLocation.houseNumber);
+          }
+          if (detailedLocation.street) {
+            addressParts.push(detailedLocation.street);
+          }
+
+          // Add area/neighbourhood
+          if (
+            detailedLocation.neighbourhood &&
+            detailedLocation.neighbourhood !== detailedLocation.area
+          ) {
+            addressParts.push(detailedLocation.neighbourhood);
+          } else if (detailedLocation.area) {
+            addressParts.push(detailedLocation.area);
+          }
+
+          // Add city
+          if (detailedLocation.city) {
+            addressParts.push(detailedLocation.city);
+          }
+
+          // Add state if not already included
+          if (
+            detailedLocation.state &&
+            detailedLocation.state !== detailedLocation.city
+          ) {
+            addressParts.push(detailedLocation.state);
+          }
+
+          // Add postcode
+          if (detailedLocation.postcode) {
+            addressParts.push(detailedLocation.postcode);
+          }
+
+          // Format different address versions
+          detailedLocation.shortAddress = [
+            detailedLocation.street,
+            detailedLocation.area || detailedLocation.city,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+          detailedLocation.fullAddress = addressParts.join(", ");
+
+          detailedLocation.displayAddress =
+            detailedLocation.fullAddress ||
+            detailedLocation.shortAddress ||
+            `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+          console.log("Detailed location:", detailedLocation); // For debugging
           setLocation(detailedLocation);
         } catch (error) {
-          // Fallback if geocoding fails
-          setLocation({
+          console.error("Geocoding error:", error);
+
+          // Enhanced fallback with basic location info
+          const fallbackLocation = {
             lat: latitude,
             lng: longitude,
-            address: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(
+            street: "",
+            area: "",
+            city: "Current Location",
+            state: "",
+            postcode: "",
+            shortAddress: `Location: ${latitude.toFixed(
               4
-            )}`,
-            fullAddress: "Location captured successfully",
-          });
+            )}, ${longitude.toFixed(4)}`,
+            fullAddress: `Coordinates: ${latitude.toFixed(
+              6
+            )}, ${longitude.toFixed(6)}`,
+            displayAddress: `Current Location (${latitude.toFixed(
+              4
+            )}, ${longitude.toFixed(4)})`,
+          };
+
+          setLocation(fallbackLocation);
         }
 
         setLocationLoading(false);
@@ -178,8 +284,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 300000,
+        timeout: 20000, // Increased timeout for better accuracy
+        maximumAge: 60000, // Cache location for 1 minute
       }
     );
   };
@@ -440,26 +546,55 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
               )}
 
             {location && (
-              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+              <div className="p-5 bg-emerald-50 border border-emerald-200 rounded-xl">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
-                      <MapPin className="w-4 h-4 text-emerald-600" />
+                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mt-1">
+                      <MapPin className="w-5 h-5 text-emerald-600" />
                     </div>
-                    <div>
-                      <div className="font-medium text-emerald-900">
-                        Location Captured
+                    <div className="flex-1">
+                      <div className="font-semibold text-emerald-900 mb-2">
+                        📍 Location Captured
                       </div>
-                      {location.street && (
-                        <div className="text-sm text-emerald-700">
-                          {location.street}
+
+                      {/* Street Address */}
+                      {(location.houseNumber || location.street) && (
+                        <div className="mb-1">
+                          <span className="text-sm font-medium text-emerald-800">
+                            {[location.houseNumber, location.street]
+                              .filter(Boolean)
+                              .join(" ")}
+                          </span>
                         </div>
                       )}
-                      <div className="text-sm text-emerald-700">
-                        {location.fullAddress}
+
+                      {/* Area/Neighbourhood */}
+                      {location.neighbourhood && (
+                        <div className="text-sm text-emerald-700 mb-1">
+                          🏠 {location.neighbourhood}
+                        </div>
+                      )}
+
+                      {/* City, State, Postcode */}
+                      <div className="text-sm text-emerald-700 mb-1">
+                        🏙️{" "}
+                        {[location.city, location.state, location.postcode]
+                          .filter(Boolean)
+                          .join(", ")}
                       </div>
-                      <div className="text-xs text-emerald-600 mt-1">
-                        {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+
+                      {/* Full Address */}
+                      {location.fullAddress && (
+                        <div className="text-xs text-emerald-600 bg-emerald-100 rounded-lg px-2 py-1 mt-2">
+                          <strong>Complete Address:</strong>
+                          <br />
+                          {location.fullAddress}
+                        </div>
+                      )}
+
+                      {/* Coordinates */}
+                      <div className="text-xs text-emerald-500 mt-2">
+                        📐 {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
                       </div>
                     </div>
                   </div>
