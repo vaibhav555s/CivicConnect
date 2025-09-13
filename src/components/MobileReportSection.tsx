@@ -27,6 +27,7 @@ import {
   increment,
 } from "firebase/firestore";
 
+
 interface MobileReportSectionProps {
   onBack: () => void;
   onAuthRequired: () => void;
