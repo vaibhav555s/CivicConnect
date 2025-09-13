@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from "react";
 import {
-  Plus,
-  TrendingUp,
-  MapPin,
   Camera,
-  Cloud,
-  Sun,
-  CloudRain,
+  MapPin,
   BarChart3,
+  ArrowUpRight,
+  TrendingUp,
   Users,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  ArrowRight,
-  Bell,
-  Award,
 } from "lucide-react";
 
 interface WeatherData {
@@ -33,7 +24,6 @@ const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate }) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Dynamic greeting based on time
   const getTimeBasedGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return "Good Morning! ☀️";
@@ -42,42 +32,9 @@ const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate }) => {
     return "Good Night! 🌙";
   };
 
-  // Mock recent activity data
-  const recentActivity = [
-    {
-      id: 1,
-      type: "resolved",
-      title: "Pothole on MG Road",
-      time: "2h ago",
-      category: "🛣️",
-    },
-    {
-      id: 2,
-      type: "new",
-      title: "Street light issue",
-      time: "5h ago",
-      category: "💡",
-    },
-    {
-      id: 3,
-      type: "progress",
-      title: "Water leakage fixed",
-      time: "1d ago",
-      category: "💧",
-    },
-  ];
-
-  // Mock trending issues
-  const trendingIssues = [
-    { issue: "Potholes", count: 24, trend: "+12%" },
-    { issue: "Lighting", count: 18, trend: "+8%" },
-    { issue: "Drainage", count: 15, trend: "+5%" },
-  ];
-
   const fetchLocationAndWeather = async () => {
     try {
       setLoading(true);
-      // Simulate realistic loading time
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       const mockWeatherData: WeatherData = {
@@ -100,246 +57,206 @@ const MobileHome: React.FC<MobileHomeProps> = ({ onNavigate }) => {
   }, []);
 
   return (
-    <section className="px-4 pt-6 pb-12 bg-gradient-to-b from-subtle to-surface min-h-screen">
-      <div className="max-w-lg mx-auto">
-        {/* Header with Notification */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex-1">
-            <h1 className="text-2xl font-semibold text-accent">
-              {getTimeBasedGreeting()}
-            </h1>
-          </div>
-          <button className="p-2 hover:bg-surface rounded-xl transition-colors relative">
-            <Bell className="w-5 h-5 text-text-secondary" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-          </button>
+    <section className="px-4 pt-12 pb-20 bg-gray-50 min-h-screen">
+      <div className="max-w-sm mx-auto">
+        {/* Header with subtle animation */}
+        <div className="mb-16 animate-fade-in">
+          <h1 className="text-4xl font-bold text-black mb-3 tracking-tight leading-tight">
+            {getTimeBasedGreeting()}
+          </h1>
+
+          {/* Location Card - Clean but present */}
+          {!loading && weather && (
+            <div className="inline-flex items-center space-x-3 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-100 animate-slide-up">
+              <MapPin className="w-4 h-4 text-gray-500" />
+              <span className="text-sm font-medium text-gray-700">
+                {weather.city} • {weather.temperature}°C {weather.icon}
+              </span>
+            </div>
+          )}
+
+          {loading && (
+            <div className="inline-flex items-center space-x-3 bg-white rounded-xl px-4 py-2 shadow-sm border border-gray-100">
+              <div className="w-4 h-4 bg-gray-300 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-500">Getting location...</span>
+            </div>
+          )}
+
+          <p className="text-gray-600 text-lg mt-4">
+            Ready to make your city better?
+          </p>
         </div>
 
-        {/* Location & Weather Context */}
-        {!loading && weather && (
-          <div className="bg-surface border border-borders rounded-2xl p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <MapPin className="w-4 h-4 text-text-secondary" />
-                <div>
-                  <div className="font-medium text-accent text-sm">
-                    {weather.city}, {weather.state}
-                  </div>
-                  <div className="flex items-center space-x-2 text-xs text-text-secondary">
-                    <span>{weather.icon}</span>
-                    <span>
-                      {weather.temperature}°C • {weather.condition}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-text-secondary">Air Quality</div>
-                <div className="text-sm font-medium text-emerald-600">
-                  Good 🟢
-                </div>
-              </div>
+        {/* Hero Button with micro-interaction */}
+        <div className="mb-14 animate-fade-in-delay">
+          <button
+            onClick={() => onNavigate("report")}
+            className="group w-full bg-black text-white py-5 rounded-2xl text-xl font-semibold hover:bg-gray-900 transition-all duration-300 active:scale-95 shadow-lg hover:shadow-xl"
+          >
+            <div className="flex items-center justify-center space-x-3">
+              <Camera className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+              <span>Report New Issue</span>
             </div>
-          </div>
-        )}
+          </button>
 
-        {/* Loading state */}
-        {loading && (
-          <div className="bg-surface border border-borders rounded-2xl p-4 mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-4 h-4 animate-pulse bg-gray-300 rounded"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 rounded animate-pulse mb-2"></div>
-                <div className="h-3 bg-gray-100 rounded animate-pulse w-2/3"></div>
-              </div>
+          {/* Subtle hint */}
+          <p className="text-center text-xs text-gray-500 mt-3 opacity-75">
+            One tap to make a difference
+          </p>
+        </div>
+
+        {/* Enhanced Stats with better visual weight */}
+        <div className="grid grid-cols-2 gap-4 mb-12 animate-fade-in-delay-2">
+          <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+            <div className="text-4xl font-black text-black mb-2 hover:scale-110 transition-transform duration-300 cursor-default">
+              12
             </div>
-          </div>
-        )}
-
-        {/* Impact Stats - Enhanced */}
-        <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-surface border border-borders rounded-xl p-4 text-center card-hover">
-            <div className="text-xl font-semibold text-accent mb-1">12</div>
-            <div className="text-xs text-text-secondary">Your Reports</div>
-            <div className="text-xs text-emerald-600 font-medium mt-1">
+            <div className="text-sm text-gray-600 font-medium">
+              Your Reports
+            </div>
+            <div className="text-xs text-emerald-600 font-semibold mt-1">
               +2 this week
             </div>
           </div>
-          <div className="bg-surface border border-borders rounded-xl p-4 text-center card-hover">
-            <div className="text-xl font-semibold text-emerald-600 mb-1">8</div>
-            <div className="text-xs text-text-secondary">Resolved</div>
-            <div className="text-xs text-emerald-600 font-medium mt-1">
+
+          <div className="bg-white rounded-2xl p-6 text-center shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
+            <div className="text-4xl font-black text-emerald-600 mb-2 hover:scale-110 transition-transform duration-300 cursor-default">
+              8
+            </div>
+            <div className="text-sm text-gray-600 font-medium">Resolved</div>
+            <div className="text-xs text-emerald-600 font-semibold mt-1">
               67% success
             </div>
           </div>
-          <div className="bg-surface border border-borders rounded-xl p-4 text-center card-hover">
-            <div className="text-xl font-semibold text-amber-600 mb-1">156</div>
-            <div className="text-xs text-text-secondary">Community</div>
-            <div className="text-xs text-blue-600 font-medium mt-1">
-              Impact Points
+        </div>
+
+        {/* Community Insight - Adds visual interest */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-5 mb-8 border border-blue-100 animate-fade-in-delay-3">
+          <div className="flex items-center space-x-3 mb-3">
+            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-blue-600" />
             </div>
+            <h3 className="font-semibold text-gray-900">Community Activity</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Users className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-700">
+                24 issues reported nearby
+              </span>
+            </div>
+            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+              +15% this week
+            </span>
           </div>
         </div>
 
-        {/* Primary Action Button */}
-        <button
-          onClick={() => onNavigate("report")}
-          className="w-full btn-primary py-4 rounded-2xl text-lg mb-6 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-shadow"
-        >
-          <Camera className="w-5 h-5" />
-          <span>Report New Issue</span>
-        </button>
-
-        {/* Quick Actions Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <button
-            onClick={() => onNavigate("reports")}
-            className="bg-surface border border-borders rounded-xl p-4 card-hover flex items-center space-x-3"
-          >
-            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-medium text-accent">My Reports</div>
-              <div className="text-xs text-text-secondary">Track progress</div>
-            </div>
-          </button>
+        {/* Action Cards - Better visual hierarchy */}
+        <div className="space-y-3 animate-fade-in-delay-4">
           <button
             onClick={() => onNavigate("feed")}
-            className="bg-surface border border-borders rounded-xl p-4 card-hover flex items-center space-x-3"
+            className="w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-black hover:shadow-lg transition-all duration-300 group"
           >
-            <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-green-600" />
-            </div>
-            <div className="text-left">
-              <div className="text-sm font-medium text-accent">
-                Nearby Issues
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors duration-300">
+                  <MapPin className="w-6 h-6 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <div className="text-lg font-semibold text-black">
+                    Nearby Issues
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Explore your community
+                  </div>
+                </div>
               </div>
-              <div className="text-xs text-text-secondary">24 active</div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                  24
+                </span>
+                <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigate("reports")}
+            className="w-full bg-white border border-gray-200 rounded-2xl p-5 hover:border-black hover:shadow-lg transition-all duration-300 group"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition-colors duration-300">
+                  <BarChart3 className="w-6 h-6 text-emerald-600" />
+                </div>
+                <div className="text-left">
+                  <div className="text-lg font-semibold text-black">
+                    My Reports
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    Track your progress
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                  67%
+                </span>
+                <ArrowUpRight className="w-5 h-5 text-gray-400 group-hover:text-black group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300" />
+              </div>
             </div>
           </button>
         </div>
-
-        {/* Community Impact Section */}
-        <div className="bg-surface border border-borders rounded-2xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-accent">
-              Community Impact
-            </h3>
-            <Award className="w-5 h-5 text-amber-500" />
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                  <CheckCircle className="w-4 h-4 text-emerald-600" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-accent">
-                    Issues Resolved
-                  </div>
-                  <div className="text-xs text-text-secondary">This month</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-accent">47</div>
-                <div className="text-xs text-emerald-600">+23%</div>
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-4 h-4 text-blue-600" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-accent">
-                    Active Citizens
-                  </div>
-                  <div className="text-xs text-text-secondary">
-                    In your area
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-accent">234</div>
-                <div className="text-xs text-blue-600">+12%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="bg-surface border border-borders rounded-2xl p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-accent">
-              Recent Activity
-            </h3>
-            <button
-              onClick={() => onNavigate("feed")}
-              className="text-sm text-blue-600 font-medium flex items-center space-x-1"
-            >
-              <span>View All</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          </div>
-          <div className="space-y-3">
-            {recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center space-x-3">
-                <div className="text-lg">{activity.category}</div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium text-accent">
-                    {activity.title}
-                  </div>
-                  <div className="text-xs text-text-secondary flex items-center space-x-2">
-                    <Clock className="w-3 h-3" />
-                    <span>{activity.time}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs ${
-                        activity.type === "resolved"
-                          ? "bg-emerald-100 text-emerald-600"
-                          : activity.type === "new"
-                          ? "bg-blue-100 text-blue-600"
-                          : "bg-amber-100 text-amber-600"
-                      }`}
-                    >
-                      {activity.type === "resolved"
-                        ? "✅ Resolved"
-                        : activity.type === "new"
-                        ? "🆕 New"
-                        : "🔄 In Progress"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Trending Issues Insight */}
-        <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-2xl p-5">
-          <div className="flex items-center space-x-2 mb-3">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-semibold text-blue-900">
-              Trending Issues
-            </h3>
-          </div>
-          <div className="space-y-2">
-            {trendingIssues.map((issue, index) => (
-              <div key={index} className="flex items-center justify-between">
-                <div className="text-sm font-medium text-blue-800">
-                  {issue.issue}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-blue-700">{issue.count}</span>
-                  <span className="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">
-                    {issue.trend}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
+
+      {/* Custom CSS for animations */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.6s ease-out;
+        }
+
+        .animate-fade-in-delay {
+          animation: fade-in 0.6s ease-out 0.1s both;
+        }
+
+        .animate-fade-in-delay-2 {
+          animation: fade-in 0.6s ease-out 0.2s both;
+        }
+
+        .animate-fade-in-delay-3 {
+          animation: fade-in 0.6s ease-out 0.3s both;
+        }
+
+        .animate-fade-in-delay-4 {
+          animation: fade-in 0.6s ease-out 0.4s both;
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.4s ease-out 0.2s both;
+        }
+      `}</style>
     </section>
   );
 };
