@@ -28,6 +28,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   const [description, setDescription] = useState<string>("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   const [location, setLocation] = useState<any>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<
@@ -432,48 +433,123 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             </label>
 
             {/* Photo Grid */}
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {imagePreviews.map((preview, index) => (
-                <div
-                  key={index}
-                  className="relative aspect-square rounded-xl overflow-hidden border border-borders"
-                >
-                  <img
-                    src={preview}
-                    alt={`Photo ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+            {imagePreviews.length > 0 && (
+              <div className="grid grid-cols-3 gap-3 mb-4">
+                {imagePreviews.map((preview, index) => (
+                  <div
+                    key={index}
+                    className="relative aspect-square rounded-xl overflow-hidden border border-borders"
+                  >
+                    <img
+                      src={preview}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Add Photo Button */}
+            {selectedImages.length < 5 && (
+              <button
+                type="button"
+                onClick={() => setShowPhotoOptions(true)}
+                className="w-full p-4 border-2 border-dashed border-borders rounded-xl hover:border-accent hover:bg-subtle/30 transition-colors flex items-center justify-center space-x-3"
+              >
+                <Camera className="w-6 h-6 text-text-secondary" />
+                <div>
+                  <div className="font-medium text-accent">Add Photos</div>
+                  <div className="text-sm text-text-secondary">
+                    Camera or Gallery
+                  </div>
+                </div>
+              </button>
+            )}
+
+            {/* Mobile Photo Options Modal */}
+            {showPhotoOptions && (
+              <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50">
+                <div className="bg-white rounded-t-3xl w-full max-w-lg p-6 space-y-3">
+                  <div className="text-center mb-4">
+                    <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
+                    <h3 className="font-semibold text-accent">Add Photo</h3>
+                    <p className="text-sm text-text-secondary">
+                      Choose how to add your photo
+                    </p>
+                  </div>
+
+                  {/* Camera Option */}
+                  <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                      <Camera className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-accent">Take Photo</div>
+                      <div className="text-sm text-text-secondary">
+                        Use camera to capture
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        handleImageSelect(e);
+                        setShowPhotoOptions(false);
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {/* Gallery Option */}
+                  <label className="flex items-center space-x-4 p-4 rounded-xl hover:bg-gray-50 cursor-pointer">
+                    <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                      <Upload className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <div className="font-medium text-accent">
+                        Choose from Gallery
+                      </div>
+                      <div className="text-sm text-text-secondary">
+                        Select existing photos
+                      </div>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        handleImageSelect(e);
+                        setShowPhotoOptions(false);
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {/* Cancel */}
                   <button
                     type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-black/70 text-white rounded-full flex items-center justify-center hover:bg-black/90 transition-colors"
+                    onClick={() => setShowPhotoOptions(false)}
+                    className="w-full p-4 text-center text-text-secondary hover:text-accent transition-colors"
                   >
-                    <X className="w-3 h-3" />
+                    Cancel
                   </button>
                 </div>
-              ))}
+              </div>
+            )}
 
-              {/* Add Photo Button */}
-              {selectedImages.length < 5 && (
-                <label className="aspect-square border-2 border-dashed border-borders rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-accent hover:bg-subtle/30 transition-colors">
-                  <Plus className="w-6 h-6 text-text-secondary mb-1" />
-                  <span className="text-xs text-text-secondary">Add Photo</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    multiple
-                    onChange={handleImageSelect}
-                    className="hidden"
-                  />
-                </label>
-              )}
-            </div>
-
-            {/* Photo Upload Instructions */}
-            <p className="text-xs text-text-secondary">
-              Upload up to 5 photos to help authorities understand the issue
-              better
+            {/* Photo Instructions */}
+            <p className="text-xs text-text-secondary mt-3">
+              📸 Upload up to 5 photos • Clear images help authorities resolve
+              issues faster
             </p>
           </div>
 
