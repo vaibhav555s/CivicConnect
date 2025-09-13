@@ -16,6 +16,16 @@ import {
   X,
 } from "lucide-react";
 import ProtectedRoute from './auth/ProtectedRoute';
+import { db } from '../../lib/firebase'; // Adjust path as needed
+import { useAuth } from '../contexts/AuthContext';
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  increment,
+} from "firebase/firestore";
 
 interface MobileReportSectionProps {
   onBack: () => void;
@@ -39,7 +49,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   >("idle");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-
+  const { user } = useAuth();
   const categories = [
     {
       id: "roads",
@@ -295,31 +305,105 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !selectedCategory) return;
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!title || !selectedCategory || !user) return;
 
-    setSubmitting(true);
+      setSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      try {
+        // Upload images to Firebase Storage (optional - you can skip this for demo)
+        const imageUrls: string[] = [];
+        // For demo, we'll just store image file names
+        const imageFileNames = selectedImages.map((file) => file.name);
 
-    setSuccess(true);
+        // Create report data object
+        const reportData = {
+          // User Association
+          userId: user.uid,
+          userEmail: user.email,
+          userDisplayName: user.displayName || "Anonymous",
 
-    // Reset form after success
-    setTimeout(() => {
-      setSuccess(false);
-      setTitle("");
-      setDescription("");
-      setSelectedCategory("");
-      setSelectedImages([]);
-      setImagePreviews([]);
-      setLocation(null);
-      setLocationPermissionStatus("idle");
-      onBack();
-    }, 2500);
+          // Report Details
+          title: title.trim(),
+          description: description.trim(),
+          category: selectedCategory,
 
-    setSubmitting(false);
+          // Location Data
+          location: location
+            ? {
+                lat: location.lat,
+                lng: location.lng,
+                address: location.displayAddress || location.fullAddress,
+                fullLocation: location,
+              }
+            : null,
+
+          // Media
+          imageFileNames: imageFileNames,
+          imageUrls: imageUrls, // Will be populated after upload
+
+          // Status & Timestamps
+          status: "pending",
+          priority: "medium",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+
+          // Department Assignment
+          assignedDepartment:
+            categories.find((cat) => cat.id === selectedCategory)?.department ||
+            "General",
+
+          // Analytics
+          reportId: null, // Will be set after document creation
+        };
+
+        console.log("Saving report:", reportData);
+
+        // Save to Firestore
+        const docRef = await addDoc(collection(db, "reports"), reportData);
+
+        console.log("Report saved with ID:", docRef.id);
+
+        // Update user stats (optional)
+        await updateUserStats(user.uid);
+
+        setSuccess(true);
+
+        // Reset form after success
+        setTimeout(() => {
+          setSuccess(false);
+          setTitle("");
+          setDescription("");
+          setSelectedCategory("");
+          setSelectedImages([]);
+          setImagePreviews([]);
+          setLocation(null);
+          setLocationPermissionStatus("idle");
+          onBack();
+        }, 2500);
+      } catch (error) {
+        console.error("Error saving report:", error);
+        alert("Failed to submit report. Please try again.");
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+  // Firebase submission
+
+
+  // **Function to update user statistics**
+  const updateUserStats = async (userId: string) => {
+    try {
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, {
+        "stats.reportsSubmitted": increment(1),
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error updating user stats:", error);
+    }
   };
 
   // Success screen
@@ -345,7 +429,10 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   }
 
   return (
-    <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
+    <ProtectedRoute
+      onAuthRequired={onAuthRequired}
+      message="Sign in to report issues"
+    >
       <section className="min-h-screen bg-surface">
         <div className="max-w-lg mx-auto">
           {/* Header */}
@@ -363,7 +450,9 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
           <form onSubmit={handleSubmit} className="p-6 space-y-10">
             {/* Modern Issue Title - No Border Style */}
             <div>
-              <label className="block text-caption mb-6">What's the issue?</label>
+              <label className="block text-caption mb-6">
+                What's the issue?
+              </label>
               <div className="relative">
                 <input
                   type="text"
@@ -496,7 +585,9 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                         <Camera className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <div className="font-medium text-accent">Take Photo</div>
+                        <div className="font-medium text-accent">
+                          Take Photo
+                        </div>
                         <div className="text-sm text-text-secondary">
                           Use camera to capture
                         </div>
@@ -674,7 +765,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
                         {/* Coordinates */}
                         <div className="text-xs text-emerald-500 mt-2">
-                          📐 {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                          📐 {location.lat.toFixed(6)},{" "}
+                          {location.lng.toFixed(6)}
                         </div>
                       </div>
                     </div>
