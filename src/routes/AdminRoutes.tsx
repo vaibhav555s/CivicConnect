@@ -9,6 +9,7 @@ import { DepartmentManagement } from '../admin/DepartmentManagement';
 import { StaffManagement } from '../admin/StaffManagement';
 import { Analytics } from '../admin/Analytics'; 
 import { Communications } from '../admin/Communications';
+import { Settings } from '../admin/Settings';
 import { ProtectedRoute } from '../admin/ProtectedRoute';
 
 export const AdminRoutes: React.FC = () => {
@@ -74,10 +75,7 @@ export const AdminRoutes: React.FC = () => {
       <Route path="/settings" element={
         <ProtectedRoute>
           <AdminLayout>
-            <div className="p-8">
-              <h1 className="text-4xl font-semibold text-black mb-4">Admin Settings</h1>
-              <p className="text-gray-600">Settings panel coming soon...</p>
-            </div>
+            <Settings />
           </AdminLayout>
         </ProtectedRoute>
       } />
