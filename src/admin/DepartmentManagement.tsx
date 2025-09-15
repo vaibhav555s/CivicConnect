@@ -29,7 +29,7 @@ export const DepartmentManagement: React.FC = () => {
   const [departments, setDepartments] = useState<Department[]>([
     {
       id: '1',
-      name: 'Public Works',
+      name: 'Public Workedd',
       description: 'Responsible for road maintenance, infrastructure repairs, and public construction projects.',
       head: {
         name: 'John Smith',
