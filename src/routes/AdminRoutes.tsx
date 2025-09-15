@@ -7,7 +7,8 @@ import { AdminDashboard } from '../admin/AdminDashboard';
 import { IssueManagement } from '../admin/IssueManagement';
 import { DepartmentManagement } from '../admin/DepartmentManagement';
 import { StaffManagement } from '../admin/StaffManagement';
-import { Analytics } from '../admin/Analytics'; // Add this import
+import { Analytics } from '../admin/Analytics'; 
+import { Communications } from '../admin/Communications';
 import { ProtectedRoute } from '../admin/ProtectedRoute';
 
 export const AdminRoutes: React.FC = () => {
@@ -62,13 +63,12 @@ export const AdminRoutes: React.FC = () => {
       <Route path="/communications" element={
         <ProtectedRoute>
           <AdminLayout>
-            <div className="p-8">
-              <h1 className="text-4xl font-semibold text-black mb-4">Communications Center</h1>
-              <p className="text-gray-600">Communication features coming soon...</p>
-            </div>
+            <Communications />
           </AdminLayout>
         </ProtectedRoute>
       } />
+
+ 
       
       {/* Settings - placeholder for now */}
       <Route path="/settings" element={
