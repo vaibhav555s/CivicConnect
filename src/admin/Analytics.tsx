@@ -22,6 +22,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "../../lib/firebase"; // Adjust path as needed
+import { useFirebaseIssues } from './useFirebaseIssues';
+import { IssueHeatmap } from './IssueHeatmap';
 
 // Register Chart.js components
 ChartJS.register(
@@ -73,15 +75,16 @@ interface ReportData {
   location?: {
     address?: string;
     displayAddress?: string;
+    latitude?: number;
+    longitude?: number;
   };
   assignedDepartment?: string;
   userId: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export const Analytics: React.FC = () => {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
-    null
-  );
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [timeframe, setTimeframe] = useState("30days");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +97,31 @@ export const Analytics: React.FC = () => {
     monthlyGrowth: 0,
     weeklyGrowth: 0,
   });
+
+  // Firebase issues for heatmap
+  const { issues: firebaseIssues, loading: issuesLoading } = useFirebaseIssues();
+  const [heatmapFilters, setHeatmapFilters] = useState({
+    status: 'all',
+    category: 'all',
+    timeRange: '30days',
+    showResolved: true,
+    showPending: true,
+    showInProgress: true, // Added for in-progress
+  });
+
+  // Convert Firebase issues to heatmap format (only 3 statuses)
+  const heatmapIssues = firebaseIssues
+    .filter(issue => issue.location?.latitude && issue.location?.longitude)
+    .map(issue => ({
+      id: issue.id,
+      latitude: issue.location.latitude,
+      longitude: issue.location.longitude,
+      status: issue.status as 'pending' | 'in-progress' | 'resolved', // Only 3 statuses
+      category: issue.category,
+      priority: issue.priority || 'medium' as 'low' | 'medium' | 'high' | 'critical',
+      title: issue.title,
+      resolvedAt: issue.resolvedAt?.toDate?.()?.toISOString?.()
+    }));
 
   // Fetch reports from Firebase
   useEffect(() => {
@@ -462,7 +490,7 @@ export const Analytics: React.FC = () => {
     return parts[0] || "Unknown Area";
   };
 
-  // Chart configurations (same as before)
+  // Chart configurations
   const lineChartOptions = {
     responsive: true,
     plugins: {
@@ -697,6 +725,98 @@ export const Analytics: React.FC = () => {
         </div>
       </div>
 
+      {/* NEW: Issue Resolution Heatmap */}
+      <div className="bg-white rounded-2xl border border-gray-200 p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-2xl font-semibold text-black">Issue Resolution Heatmap</h2>
+            <p className="text-gray-600">Real-time geographic distribution of civic issues</p>
+          </div>
+          <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            🔍 View Full Screen
+          </button>
+        </div>
+
+        {/* Heatmap Filters */}
+        <div className="flex flex-wrap items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">
+          <select
+            value={heatmapFilters.status}
+            onChange={(e) => setHeatmapFilters(prev => ({ ...prev, status: e.target.value }))}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-black focus:outline-none"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">🔴 Pending</option>
+            <option value="in-progress">🟡 In Progress</option>
+            <option value="resolved">🟢 Resolved</option>
+          </select>
+
+          <select
+            value={heatmapFilters.category}
+            onChange={(e) => setHeatmapFilters(prev => ({ ...prev, category: e.target.value }))}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-black focus:outline-none"
+          >
+            <option value="all">All Categories</option>
+            <option value="roads">Roads</option>
+            <option value="lighting">Lighting</option>
+            <option value="water">Water</option>
+            <option value="waste">Waste</option>
+          </select>
+
+          <select
+            value={heatmapFilters.timeRange}
+            onChange={(e) => setHeatmapFilters(prev => ({ ...prev, timeRange: e.target.value }))}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-black focus:outline-none"
+          >
+            <option value="all">All Time</option>
+            <option value="7days">Last 7 Days</option>
+            <option value="30days">Last 30 Days</option>
+            <option value="90days">Last 3 Months</option>
+          </select>
+
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={heatmapFilters.showPending}
+              onChange={(e) => setHeatmapFilters(prev => ({ ...prev, showPending: e.target.checked }))}
+              className="rounded"
+            />
+            <span className="text-sm text-gray-700">🔴 Pending</span>
+          </label>
+
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={heatmapFilters.showInProgress}
+              onChange={(e) => setHeatmapFilters(prev => ({ ...prev, showInProgress: e.target.checked }))}
+              className="rounded"
+            />
+            <span className="text-sm text-gray-700">🟡 In Progress</span>
+          </label>
+
+          <label className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              checked={heatmapFilters.showResolved}
+              onChange={(e) => setHeatmapFilters(prev => ({ ...prev, showResolved: e.target.checked }))}
+              className="rounded"
+            />
+            <span className="text-sm text-gray-700">🟢 Resolved</span>
+          </label>
+        </div>
+
+        {/* Heatmap */}
+        <div className="h-96 rounded-2xl overflow-hidden border border-gray-200">
+          {!issuesLoading ? (
+            <IssueHeatmap issues={heatmapIssues} filterOptions={heatmapFilters} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+              <span className="ml-4 text-gray-600">Loading heatmap...</span>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* Charts Row 2 - Now Dynamic */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Department Performance */}
@@ -861,13 +981,12 @@ export const Analytics: React.FC = () => {
 
           <div className="bg-white rounded-xl p-6">
             <div className="flex items-center mb-3">
-              <span className="text-2xl mr-3">📈</span>
-              <h3 className="font-semibold text-black">Growth Trend</h3>
+              <span className="text-2xl mr-3">🗺️</span>
+              <h3 className="font-semibold text-black">Heatmap Insights</h3>
             </div>
             <p className="text-gray-600 text-sm">
-              {keyMetrics.weeklyGrowth > 0
-                ? `Issues increased by ${keyMetrics.weeklyGrowth}% this week. Monitor resource allocation.`
-                : `Stable issue reporting trends. Good system performance.`}
+              The heatmap shows {heatmapIssues.length} issues with location data. 
+              Green clusters indicate successful resolution areas, while red shows pending issues.
             </p>
           </div>
 
