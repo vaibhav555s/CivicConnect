@@ -54,6 +54,9 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   onClose,
 }) => {
   const [issue, setIssue] = useState<Issue | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [notes, setNotes] = useState("");
@@ -420,31 +423,35 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
               </div>
 
               {/* Photos */}
-              {issue.photos.length > 0 && (
+              {issue.imageUrls && issue.imageUrls.length > 0 && (
                 <div>
                   <h3 className="text-xl font-semibold text-black mb-4">
-                    Photos ({issue.photos.length})
+                    Photos ({issue.imageUrls.length})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {issue.photos.map((photoUrl, index) => (
+                    {issue.imageUrls.map((photoUrl, index) => (
                       <div
                         key={index}
-                        className="aspect-square bg-gray-100 rounded-xl overflow-hidden"
+                        className="aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setSelectedImageIndex(index)}
                       >
-                        {photoUrl ? (
-                          <img
-                            src={photoUrl}
-                            alt={`Issue photo ${index + 1}`}
-                            className="w-full h-full object-cover hover:scale-105 transition-transform cursor-pointer"
-                            onClick={() => window.open(photoUrl, "_blank")}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-gray-400">
-                              📸 Photo {index + 1}
-                            </span>
-                          </div>
-                        )}
+                        <img
+                          src={photoUrl}
+                          alt={`Issue photo ${index + 1}`}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = "none";
+                            const fallback =
+                              e.currentTarget.parentElement?.querySelector(
+                                ".fallback-icon"
+                              );
+                            if (fallback) fallback.style.display = "flex";
+                          }}
+                        />
+                        <div className="fallback-icon w-full h-full hidden items-center justify-center">
+                          <span className="text-gray-400 text-2xl">📸</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -703,6 +710,52 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
           </div>
         </div>
       </div>
+      {/* ADD THIS IMAGE MODAL CODE HERE */}
+    {selectedImageIndex !== null && issue?.imageUrls && (
+      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[60] p-4">
+        <div className="relative max-w-4xl max-h-full">
+          {/* Close button */}
+          <button
+            onClick={() => setSelectedImageIndex(null)}
+            className="absolute -top-12 right-0 text-white hover:text-gray-300 text-xl z-10"
+          >
+            ✕ Close
+          </button>
+          
+          {/* Navigation buttons */}
+          {issue.imageUrls.length > 1 && (
+            <>
+              <button
+                onClick={() => setSelectedImageIndex(selectedImageIndex > 0 ? selectedImageIndex - 1 : issue.imageUrls!.length - 1)}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl z-10"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => setSelectedImageIndex(selectedImageIndex < issue.imageUrls!.length - 1 ? selectedImageIndex + 1 : 0)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-gray-300 text-3xl z-10"
+              >
+                ›
+              </button>
+            </>
+          )}
+          
+          {/* Main image */}
+          <img
+            src={issue.imageUrls[selectedImageIndex]}
+            alt={`Issue photo ${selectedImageIndex + 1}`}
+            className="max-w-full max-h-full object-contain rounded-lg"
+          />
+          
+          {/* Image counter */}
+          {issue.imageUrls.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+              {selectedImageIndex + 1} of {issue.imageUrls.length}
+            </div>
+          )}
+        </div>
+      </div>
+    )}
     </div>
   );
 };
