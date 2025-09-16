@@ -11,6 +11,51 @@ import {
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 
+const ImageCarousel: React.FC<{ imageUrls: string[] }> = ({ imageUrls }) => {
+  const [index, setIndex] = useState(0);
+  if (!imageUrls || imageUrls.length === 0) return null;
+
+  const prev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIndex((i) => (i - 1 + imageUrls.length) % imageUrls.length);
+  };
+  const next = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIndex((i) => (i + 1) % imageUrls.length);
+  };
+
+  return (
+    <div className="h-full w-full relative overflow-hidden">
+      <img
+        src={imageUrls[index]}
+        alt={`Report image ${index + 1}`}
+        className="h-full w-full object-cover"
+      />
+      {imageUrls.length > 1 && (
+        <>
+          <button
+            aria-label="Previous image"
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-7 h-7 rounded-full flex items-center justify-center"
+          >
+            ‹
+          </button>
+          <button
+            aria-label="Next image"
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white w-7 h-7 rounded-full flex items-center justify-center"
+          >
+            ›
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/40 text-white text-[10px] px-2 py-0.5 rounded-full">
+            {index + 1}/{imageUrls.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface MyReportsProps {
   onNavigate: (tab: string) => void;
   onAuthRequired: () => void;
@@ -25,6 +70,7 @@ type ReportDoc = {
   };
   status: "pending" | "in-progress" | "resolved" | "review" | string;
   createdAt?: Timestamp;
+  imageUrls?: string[];
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -121,6 +167,7 @@ const MyReports: React.FC<MyReportsProps> = ({
             location: data.location || {},
             status: data.status || "pending",
             createdAt: data.createdAt,
+            imageUrls: Array.isArray(data.imageUrls) ? data.imageUrls : [],
           };
         });
 
@@ -275,13 +322,23 @@ const MyReports: React.FC<MyReportsProps> = ({
                   : undefined;
                 const loc = report.location?.address || "Unknown area";
 
+                const hasImages = (report.imageUrls || []).length > 0;
+
                 return (
                   <div
                     key={report.id}
                     className="bg-surface border border-borders rounded-2xl overflow-hidden card-hover"
                   >
-                    <div className="h-32 bg-subtle flex items-center justify-center">
-                      <span className="text-3xl">{emoji}</span>
+                    <div className="h-32 bg-subtle relative">
+                      {!hasImages && (
+                        <div className="h-full w-full flex items-center justify-center">
+                          <span className="text-3xl">{emoji}</span>
+                        </div>
+                      )}
+
+                      {hasImages && (
+                        <ImageCarousel imageUrls={report.imageUrls!} />
+                      )}
                     </div>
                     <div className="p-4">
                       <div className="flex items-center justify-between mb-2">

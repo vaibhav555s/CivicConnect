@@ -27,6 +27,12 @@ import {
   increment,
 } from "firebase/firestore";
 
+import { uploadImageToCloudinary, createSignatureGenerator } from "../lib/cloudinary";
+
+const CLOUDINARY_CLOUD_NAME = "civicconnect";
+const CLOUDINARY_API_KEY = "415284245642869";
+const CLOUDINARY_API_SECRET = "SQJRqJ9KaexFBGQcULP3o7HFwU8"; // ⚠ unsafe in frontend
+
 
 interface MobileReportSectionProps {
   onBack: () => void;
@@ -313,10 +319,29 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       setSubmitting(true);
 
       try {
-        // Upload images to Firebase Storage (optional - you can skip this for demo)
-        const imageUrls: string[] = [];
-        // For demo, we'll just store image file names
+        // Upload images to Cloudinary (signed upload)
         const imageFileNames = selectedImages.map((file) => file.name);
+        let imageUrls: string[] = [];
+        let imagePublicIds: string[] = [];
+
+        if (selectedImages.length > 0) {
+          const generate = createSignatureGenerator(CLOUDINARY_API_SECRET);
+          const folder = "civicconnect/reports";
+
+          const results = await Promise.all(
+            selectedImages.map((file) =>
+              uploadImageToCloudinary(file, {
+                cloudName: CLOUDINARY_CLOUD_NAME,
+                apiKey: CLOUDINARY_API_KEY,
+                folder,
+                generateSignature: (params) => generate(params),
+              })
+            )
+          );
+
+          imageUrls = results.map((r) => r.url);
+          imagePublicIds = results.map((r) => r.publicId);
+        }
 
         // Create report data object
         const reportData = {
@@ -342,7 +367,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
           // Media
           imageFileNames: imageFileNames,
-          imageUrls: imageUrls, // Will be populated after upload
+          imageUrls: imageUrls,
+          imagePublicIds: imagePublicIds,
 
           // Status & Timestamps
           status: "pending",
@@ -808,7 +834,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
         </div>
 
         {/* Custom animations */}
-        <style jsx>{`
+        <style>{`
           @keyframes fade-in {
             from {
               opacity: 0;
