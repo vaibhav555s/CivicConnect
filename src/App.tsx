@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-
 
 // User Components
 import BottomNavigation from "./components/BottomNavigation";
@@ -16,7 +15,10 @@ import AuthPage from "./components/auth/AuthPage";
 // Admin Components
 import { AdminRoutes } from "./routes/AdminRoutes";
 
-// Separate the existing mobile app content into UserApp component
+// Department Components
+import { DepartmentRoutes } from "./routes/DepartmentRoutes";
+
+// User Section
 const UserApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [showIssueDetail, setShowIssueDetail] = useState(false);
@@ -97,7 +99,7 @@ function App() {
     <AuthProvider>
       <Router>
         <Routes>
-          {/* User routes - render UserApp for relevant paths */}
+          {/* User routes */}
           <Route path="/" element={<UserApp />} />
           <Route path="/home" element={<UserApp />} />
           <Route path="/report" element={<UserApp />} />
@@ -107,6 +109,12 @@ function App() {
 
           {/* Admin routes */}
           <Route path="/admin/*" element={<AdminRoutes />} />
+
+          {/* Department routes */}
+          <Route path="/department/*" element={<DepartmentRoutes />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>
