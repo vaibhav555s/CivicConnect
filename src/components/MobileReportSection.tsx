@@ -1,3 +1,4 @@
+// components/MobileReportSection.tsx
 import React, { useState } from "react";
 import {
   Camera,
@@ -33,7 +34,6 @@ const CLOUDINARY_CLOUD_NAME = "civicconnect";
 const CLOUDINARY_API_KEY = "415284245642869";
 const CLOUDINARY_API_SECRET = "SQJRqJ9KaexFBGQcULP3o7HFwU8"; // ⚠ unsafe in frontend
 
-
 interface MobileReportSectionProps {
   onBack: () => void;
   onAuthRequired: () => void;
@@ -57,19 +57,21 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const { user } = useAuth();
+
+  // ✅ UPDATED CATEGORIES - Now matches department authentication exactly
   const categories = [
     {
       id: "roads",
       title: "Roads & Transportation",
-      department: "Public Works Department",
+      department: "Public Works Department", // ✅ Matches authentication context
       icon: Construction,
       color: "bg-blue-100 text-blue-600",
       examples: "Potholes, damaged roads, traffic signals",
     },
     {
-      id: "utilities",
+      id: "water",
       title: "Water & Utilities",
-      department: "Water Department",
+      department: "Water & Utilities Department", // ✅ Matches authentication context
       icon: Droplets,
       color: "bg-cyan-100 text-cyan-600",
       examples: "Water leaks, drainage issues, sewer problems",
@@ -77,7 +79,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     {
       id: "lighting",
       title: "Street Lighting",
-      department: "Electrical Department",
+      department: "Street Lighting Department", // ✅ Matches authentication context
       icon: Lightbulb,
       color: "bg-yellow-100 text-yellow-600",
       examples: "Broken street lights, dark areas",
@@ -85,7 +87,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     {
       id: "waste",
       title: "Waste Management",
-      department: "Sanitation Department",
+      department: "Waste Management Department", // ✅ Matches authentication context
       icon: Trash2,
       color: "bg-green-100 text-green-600",
       examples: "Garbage collection, overflowing bins",
@@ -93,7 +95,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     {
       id: "parks",
       title: "Parks & Recreation",
-      department: "Parks Department",
+      department: "Parks & Recreation Department",
       icon: Trees,
       color: "bg-emerald-100 text-emerald-600",
       examples: "Damaged benches, playground equipment",
@@ -101,7 +103,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     {
       id: "safety",
       title: "Public Safety",
-      department: "Municipal Corporation",
+      department: "Public Safety Department",
       icon: Shield,
       color: "bg-red-100 text-red-600",
       examples: "Unsafe structures, security concerns",
@@ -140,9 +142,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     setImagePreviews(newPreviews);
   };
 
-  // Get detailed location with address
-  // Replace the getCurrentLocation function with this enhanced version:
-
+  // Enhanced location function
   const getCurrentLocation = async () => {
     setLocationPermissionStatus("requesting");
     setLocationLoading(true);
@@ -160,55 +160,30 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
         try {
           // Using multiple geocoding APIs for better address details
-
-          // Primary: OpenStreetMap Nominatim (Free, detailed)
           const nominatimResponse = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1&zoom=18`
           );
           const nominatimData = await nominatimResponse.json();
 
-          // Backup: BigDataCloud (Free, good fallback)
           const bigDataResponse = await fetch(
             `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
           );
           const bigDataData = await bigDataResponse.json();
 
-          // Extract detailed address components
           const address = nominatimData.address || {};
 
           const detailedLocation = {
             lat: latitude,
             lng: longitude,
-            // Street level details
             houseNumber: address.house_number || "",
             street: address.road || address.street || bigDataData.street || "",
-
-            // Area details
-            neighbourhood:
-              address.neighbourhood ||
-              address.suburb ||
-              bigDataData.locality ||
-              "",
+            neighbourhood: address.neighbourhood || address.suburb || bigDataData.locality || "",
             area: address.suburb || address.village || address.town || "",
-
-            // City details
-            city:
-              address.city ||
-              address.town ||
-              address.village ||
-              bigDataData.city ||
-              "",
-            district:
-              address.state_district || bigDataData.principalSubdivision || "",
+            city: address.city || address.town || address.village || bigDataData.city || "",
+            district: address.state_district || bigDataData.principalSubdivision || "",
             state: address.state || bigDataData.principalSubdivision || "",
-
-            // Postal code
             postcode: address.postcode || bigDataData.postcode || "",
-
-            // Country
             country: address.country || bigDataData.countryName || "India",
-
-            // Formatted addresses
             shortAddress: "",
             fullAddress: "",
             displayAddress: "",
@@ -217,82 +192,35 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
           // Create formatted addresses
           const addressParts = [];
 
-          // Build street address
-          if (detailedLocation.houseNumber) {
-            addressParts.push(detailedLocation.houseNumber);
-          }
-          if (detailedLocation.street) {
-            addressParts.push(detailedLocation.street);
-          }
-
-          // Add area/neighbourhood
-          if (
-            detailedLocation.neighbourhood &&
-            detailedLocation.neighbourhood !== detailedLocation.area
-          ) {
+          if (detailedLocation.houseNumber) addressParts.push(detailedLocation.houseNumber);
+          if (detailedLocation.street) addressParts.push(detailedLocation.street);
+          if (detailedLocation.neighbourhood && detailedLocation.neighbourhood !== detailedLocation.area) {
             addressParts.push(detailedLocation.neighbourhood);
           } else if (detailedLocation.area) {
             addressParts.push(detailedLocation.area);
           }
-
-          // Add city
-          if (detailedLocation.city) {
-            addressParts.push(detailedLocation.city);
-          }
-
-          // Add state if not already included
-          if (
-            detailedLocation.state &&
-            detailedLocation.state !== detailedLocation.city
-          ) {
+          if (detailedLocation.city) addressParts.push(detailedLocation.city);
+          if (detailedLocation.state && detailedLocation.state !== detailedLocation.city) {
             addressParts.push(detailedLocation.state);
           }
+          if (detailedLocation.postcode) addressParts.push(detailedLocation.postcode);
 
-          // Add postcode
-          if (detailedLocation.postcode) {
-            addressParts.push(detailedLocation.postcode);
-          }
-
-          // Format different address versions
           detailedLocation.shortAddress = [
             detailedLocation.street,
             detailedLocation.area || detailedLocation.city,
-          ]
-            .filter(Boolean)
-            .join(", ");
+          ].filter(Boolean).join(", ");
 
           detailedLocation.fullAddress = addressParts.join(", ");
+          detailedLocation.displayAddress = detailedLocation.fullAddress || detailedLocation.shortAddress || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
 
-          detailedLocation.displayAddress =
-            detailedLocation.fullAddress ||
-            detailedLocation.shortAddress ||
-            `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-
-          console.log("Detailed location:", detailedLocation); // For debugging
           setLocation(detailedLocation);
         } catch (error) {
           console.error("Geocoding error:", error);
-
-          // Enhanced fallback with basic location info
           const fallbackLocation = {
             lat: latitude,
             lng: longitude,
-            street: "",
-            area: "",
-            city: "Current Location",
-            state: "",
-            postcode: "",
-            shortAddress: `Location: ${latitude.toFixed(
-              4
-            )}, ${longitude.toFixed(4)}`,
-            fullAddress: `Coordinates: ${latitude.toFixed(
-              6
-            )}, ${longitude.toFixed(6)}`,
-            displayAddress: `Current Location (${latitude.toFixed(
-              4
-            )}, ${longitude.toFixed(4)})`,
+            displayAddress: `Current Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`,
           };
-
           setLocation(fallbackLocation);
         }
 
@@ -305,122 +233,153 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       },
       {
         enableHighAccuracy: true,
-        timeout: 20000, // Increased timeout for better accuracy
-        maximumAge: 60000, // Cache location for 1 minute
+        timeout: 20000,
+        maximumAge: 60000,
       }
     );
   };
 
-  // Handle form submission
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!title || !selectedCategory || !user) return;
+  // ✅ FIXED FORM SUBMISSION - Firebase timestamp error resolved
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !selectedCategory || !user) return;
 
-      setSubmitting(true);
+    setSubmitting(true);
 
-      try {
-        // Upload images to Cloudinary (signed upload)
-        const imageFileNames = selectedImages.map((file) => file.name);
-        let imageUrls: string[] = [];
-        let imagePublicIds: string[] = [];
+    try {
+      // Upload images to Cloudinary
+      const imageFileNames = selectedImages.map((file) => file.name);
+      let imageUrls: string[] = [];
+      let imagePublicIds: string[] = [];
 
-        if (selectedImages.length > 0) {
-          const generate = createSignatureGenerator(CLOUDINARY_API_SECRET);
-          const folder = "civicconnect/reports";
+      if (selectedImages.length > 0) {
+        const generate = createSignatureGenerator(CLOUDINARY_API_SECRET);
+        const folder = "civicconnect/reports";
 
-          const results = await Promise.all(
-            selectedImages.map((file) =>
-              uploadImageToCloudinary(file, {
-                cloudName: CLOUDINARY_CLOUD_NAME,
-                apiKey: CLOUDINARY_API_KEY,
-                folder,
-                generateSignature: (params) => generate(params),
-              })
-            )
-          );
+        const results = await Promise.all(
+          selectedImages.map((file) =>
+            uploadImageToCloudinary(file, {
+              cloudName: CLOUDINARY_CLOUD_NAME,
+              apiKey: CLOUDINARY_API_KEY,
+              folder,
+              generateSignature: (params) => generate(params),
+            })
+          )
+        );
 
-          imageUrls = results.map((r) => r.url);
-          imagePublicIds = results.map((r) => r.publicId);
-        }
-
-        // Create report data object
-        const reportData = {
-          // User Association
-          userId: user.uid,
-          userEmail: user.email,
-          userDisplayName: user.displayName || "Anonymous",
-
-          // Report Details
-          title: title.trim(),
-          description: description.trim(),
-          category: selectedCategory,
-
-          // Location Data
-          location: location
-            ? {
-                lat: location.lat,
-                lng: location.lng,
-                address: location.displayAddress || location.fullAddress,
-                fullLocation: location,
-              }
-            : null,
-
-          // Media
-          imageFileNames: imageFileNames,
-          imageUrls: imageUrls,
-          imagePublicIds: imagePublicIds,
-
-          // Status & Timestamps
-          status: "pending",
-          priority: "medium",
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-
-          // Department Assignment
-          assignedDepartment:
-            categories.find((cat) => cat.id === selectedCategory)?.department ||
-            "General",
-
-          // Analytics
-          reportId: null, // Will be set after document creation
-        };
-
-        console.log("Saving report:", reportData);
-
-        // Save to Firestore
-        const docRef = await addDoc(collection(db, "reports"), reportData);
-
-        console.log("Report saved with ID:", docRef.id);
-
-        // Update user stats (optional)
-        await updateUserStats(user.uid);
-
-        setSuccess(true);
-
-        // Reset form after success
-        setTimeout(() => {
-          setSuccess(false);
-          setTitle("");
-          setDescription("");
-          setSelectedCategory("");
-          setSelectedImages([]);
-          setImagePreviews([]);
-          setLocation(null);
-          setLocationPermissionStatus("idle");
-          onBack();
-        }, 2500);
-      } catch (error) {
-        console.error("Error saving report:", error);
-        alert("Failed to submit report. Please try again.");
-      } finally {
-        setSubmitting(false);
+        imageUrls = results.map((r) => r.url);
+        imagePublicIds = results.map((r) => r.publicId);
       }
-    };
 
-  // Firebase submission
+      // Get assigned department from selected category
+      const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
+      const assignedDepartment = selectedCategoryData?.department || "General";
 
+      console.log('🎯 Auto-assigning to department:', assignedDepartment);
 
-  // **Function to update user statistics**
+      // ✅ FIXED REPORT DATA - No serverTimestamp() in arrays
+      const reportData = {
+        // User Association
+        userId: user.uid,
+        userEmail: user.email,
+        userDisplayName: user.displayName || "Anonymous",
+
+        // Report Details
+        title: title.trim(),
+        description: description.trim(),
+        category: selectedCategory,
+
+        // Location Data
+        location: location
+          ? {
+              lat: location.lat,
+              lng: location.lng,
+              address: location.displayAddress || location.fullAddress,
+              fullLocation: location,
+            }
+          : null,
+
+        // Media
+        imageFileNames: imageFileNames,
+        imageUrls: imageUrls,
+        imagePublicIds: imagePublicIds,
+
+        // Status & Timestamps
+        status: "pending",
+        priority: "medium",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+
+        // ✅ ASSIGNMENT TRACKING - No arrays with serverTimestamp()
+        assignedDepartment: assignedDepartment,
+        assignedAt: serverTimestamp(),
+        assignedBy: "system",
+
+        // Department Communication (empty arrays are fine)
+        departmentComments: [],
+        beforeAfterImages: { before: [], after: [] },
+
+        // 🔔 REAL-TIME NOTIFICATION FLAGS
+        isNewAssignment: true,
+        departmentNotified: false,
+        notificationSent: false,
+
+        // Analytics
+        reportId: null, // Will be set after document creation
+      };
+
+      console.log('💾 Saving report data to Firebase...');
+
+      // Save to Firestore
+      const docRef = await addDoc(collection(db, "reports"), reportData);
+
+      // ✅ ADD ASSIGNMENT HISTORY AFTER DOCUMENT CREATION (FIXED)
+      await updateDoc(docRef, {
+        reportId: docRef.id,
+        assignmentHistory: [
+          {
+            department: assignedDepartment,
+            assignedBy: "system",
+            assignedAt: new Date(), // ✅ Use regular Date() instead of serverTimestamp()
+            reason: "Auto-assigned based on category",
+          },
+        ],
+      });
+
+      console.log('✅ Report saved with ID:', docRef.id);
+      console.log('📨 Auto-assigned to department:', assignedDepartment);
+      console.log('🔔 Real-time notification will be sent to department dashboard');
+
+      // Update user stats
+      await updateUserStats(user.uid);
+
+      setSuccess(true);
+
+      // Reset form after success
+      setTimeout(() => {
+        setSuccess(false);
+        setTitle("");
+        setDescription("");
+        setSelectedCategory("");
+        setSelectedImages([]);
+        setImagePreviews([]);
+        setLocation(null);
+        setLocationPermissionStatus("idle");
+        onBack();
+      }, 2500);
+    } catch (error) {
+      console.error("❌ Error saving report:", error);
+      console.error("❌ Error details:", {
+        code: error.code,
+        message: error.message,
+      });
+      alert("Failed to submit report. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Function to update user statistics
   const updateUserStats = async (userId: string) => {
     try {
       const userRef = doc(db, "users", userId);
@@ -444,9 +403,14 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
           <h1 className="text-2xl font-bold text-accent mb-2">
             Issue Reported Successfully!
           </h1>
-          <p className="text-text-secondary mb-4">
+          <p className="text-text-secondary mb-2">
             Your report has been submitted to the relevant department
           </p>
+          {selectedCategory && (
+            <div className="text-sm text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mb-4 inline-block">
+              📨 Assigned to: {categories.find(c => c.id === selectedCategory)?.department}
+            </div>
+          )}
           <div className="text-sm text-text-secondary">
             Redirecting to home...
           </div>
@@ -475,7 +439,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="p-6 space-y-10">
-            {/* Modern Issue Title - No Border Style */}
+            {/* Issue Title */}
             <div>
               <label className="block text-caption mb-6">
                 What's the issue?
@@ -492,7 +456,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
               </div>
             </div>
 
-            {/* Category Selection */}
+            {/* Category Selection with Department Preview */}
             <div>
               <label className="block text-caption mb-4">Select Category</label>
               <div className="grid grid-cols-1 gap-3">
@@ -519,12 +483,17 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                           <div className="font-semibold text-accent">
                             {category.title}
                           </div>
-                          <div className="text-xs text-text-secondary mt-1">
-                            {category.department}
+                          <div className="text-xs text-green-600 mt-1 font-medium">
+                            📨 {category.department}
                           </div>
                           <div className="text-xs text-text-secondary mt-1">
                             {category.examples}
                           </div>
+                          {selectedCategory === category.id && (
+                            <div className="text-xs text-blue-600 mt-2 bg-blue-50 rounded px-2 py-1">
+                              ✅ Will be assigned to this department automatically
+                            </div>
+                          )}
                         </div>
                       </div>
                     </button>
@@ -612,12 +581,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                         <Camera className="w-6 h-6 text-blue-600" />
                       </div>
                       <div>
-                        <div className="font-medium text-accent">
-                          Take Photo
-                        </div>
-                        <div className="text-sm text-text-secondary">
-                          Use camera to capture
-                        </div>
+                        <div className="font-medium text-accent">Take Photo</div>
+                        <div className="text-sm text-text-secondary">Use camera to capture</div>
                       </div>
                       <input
                         type="file"
@@ -637,12 +602,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                         <Upload className="w-6 h-6 text-green-600" />
                       </div>
                       <div>
-                        <div className="font-medium text-accent">
-                          Choose from Gallery
-                        </div>
-                        <div className="text-sm text-text-secondary">
-                          Select existing photos
-                        </div>
+                        <div className="font-medium text-accent">Choose from Gallery</div>
+                        <div className="text-sm text-text-secondary">Select existing photos</div>
                       </div>
                       <input
                         type="file"
@@ -670,8 +631,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
               {/* Photo Instructions */}
               <p className="text-xs text-text-secondary mt-3">
-                📸 Upload up to 5 photos • Clear images help authorities resolve
-                issues faster
+                📸 Upload up to 5 photos • Clear images help authorities resolve issues faster
               </p>
             </div>
 
@@ -679,7 +639,6 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             <div>
               <label className="block text-caption mb-4">Location</label>
 
-              {/* Location Permission States */}
               {locationPermissionStatus === "requesting" && (
                 <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
                   <div className="text-center">
@@ -700,8 +659,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                       Location Permission Denied
                     </div>
                     <div className="text-xs text-red-700 mb-3">
-                      Please enable location in your browser settings and try
-                      again
+                      Please enable location in your browser settings and try again
                     </div>
                     <button
                       type="button"
@@ -729,14 +687,10 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                       </div>
                       <div>
                         <div className="font-medium text-accent">
-                          {locationLoading
-                            ? "Getting location..."
-                            : "Use Current Location"}
+                          {locationLoading ? "Getting location..." : "Use Current Location"}
                         </div>
                         <div className="text-sm text-text-secondary">
-                          {locationLoading
-                            ? "Please wait..."
-                            : "Tap to capture your exact location"}
+                          {locationLoading ? "Please wait..." : "Tap to capture your exact location"}
                         </div>
                       </div>
                     </div>
@@ -751,49 +705,9 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                         <MapPin className="w-5 h-5 text-emerald-600" />
                       </div>
                       <div className="flex-1">
-                        <div className="font-semibold text-emerald-900 mb-2">
-                          📍 Location Captured
-                        </div>
-
-                        {/* Street Address */}
-                        {(location.houseNumber || location.street) && (
-                          <div className="mb-1">
-                            <span className="text-sm font-medium text-emerald-800">
-                              {[location.houseNumber, location.street]
-                                .filter(Boolean)
-                                .join(" ")}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Area/Neighbourhood */}
-                        {location.neighbourhood && (
-                          <div className="text-sm text-emerald-700 mb-1">
-                            🏠 {location.neighbourhood}
-                          </div>
-                        )}
-
-                        {/* City, State, Postcode */}
-                        <div className="text-sm text-emerald-700 mb-1">
-                          🏙️{" "}
-                          {[location.city, location.state, location.postcode]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </div>
-
-                        {/* Full Address */}
-                        {location.fullAddress && (
-                          <div className="text-xs text-emerald-600 bg-emerald-100 rounded-lg px-2 py-1 mt-2">
-                            <strong>Complete Address:</strong>
-                            <br />
-                            {location.fullAddress}
-                          </div>
-                        )}
-
-                        {/* Coordinates */}
-                        <div className="text-xs text-emerald-500 mt-2">
-                          📐 {location.lat.toFixed(6)},{" "}
-                          {location.lng.toFixed(6)}
+                        <div className="font-semibold text-emerald-900 mb-2">📍 Location Captured</div>
+                        <div className="text-sm text-emerald-700">
+                          {location.displayAddress || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
                         </div>
                       </div>
                     </div>
@@ -812,7 +726,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
               )}
             </div>
 
-            {/* Submit Button */}
+            {/* Enhanced Submit Button */}
             <button
               type="submit"
               disabled={submitting || !title || !selectedCategory}
@@ -821,12 +735,13 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
               {submitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Submitting Report...</span>
+                  <span>Submitting to {selectedCategory ? categories.find(c => c.id === selectedCategory)?.department : 'Department'}...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-5 h-5" />
                   <span>Submit Report</span>
+                  
                 </>
               )}
             </button>

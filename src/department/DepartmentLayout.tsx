@@ -1,7 +1,8 @@
-// components/department/DepartmentLayout.tsx
+// components/department/DepartmentLayout.tsx - FIXED QUICK STATS
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, Navigate } from 'react-router-dom';
 import { useDepartmentAuth } from '../contexts/DepartmentAuthContext';
+import { useDepartmentIssues } from './useDepartmentIssues'; // ✅ Import the hook
 import {
   Building2,
   LayoutDashboard,
@@ -20,6 +21,7 @@ import {
 
 export const DepartmentLayout: React.FC = () => {
   const { user, logout } = useDepartmentAuth();
+  const { stats, loading } = useDepartmentIssues(); // ✅ Get real stats
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -111,34 +113,63 @@ export const DepartmentLayout: React.FC = () => {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* ✅ REAL QUICK STATS - Using actual data */}
         <div className="px-6 py-4 border-b border-gray-100 flex-shrink-0">
           <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
             Quick Stats
           </h3>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 text-red-500" />
-                <span className="text-sm text-gray-600">Pending</span>
+          {loading ? (
+            <div className="space-y-2">
+              <div className="animate-pulse flex items-center justify-between">
+                <div className="h-4 bg-gray-200 rounded w-20"></div>
+                <div className="h-4 bg-gray-200 rounded w-6"></div>
               </div>
-              <span className="text-sm font-medium text-gray-900">12</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-4 h-4 text-amber-500" />
-                <span className="text-sm text-gray-600">In Progress</span>
+              <div className="animate-pulse flex items-center justify-between">
+                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                <div className="h-4 bg-gray-200 rounded w-4"></div>
               </div>
-              <span className="text-sm font-medium text-gray-900">5</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-green-500" />
-                <span className="text-sm text-gray-600">Resolved Today</span>
+              <div className="animate-pulse flex items-center justify-between">
+                <div className="h-4 bg-gray-200 rounded w-28"></div>
+                <div className="h-4 bg-gray-200 rounded w-4"></div>
               </div>
-              <span className="text-sm font-medium text-gray-900">3</span>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500" />
+                  <span className="text-sm text-gray-600">Pending</span>
+                </div>
+                <span className="text-sm font-medium text-gray-900">{stats.pending}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm text-gray-600">In Progress</span>
+                </div>
+                <span className="text-sm font-medium text-gray-900">{stats.inProgress}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-gray-600">Resolved Today</span>
+                </div>
+                <span className="text-sm font-medium text-gray-900">{stats.todayResolved}</span>
+              </div>
+              
+              {/* ✅ ADDITIONAL REAL STATS */}
+              <div className="pt-2 border-t border-gray-100 mt-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Total Assigned</span>
+                  <span className="text-xs font-medium text-blue-600">{stats.total}</span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-gray-500">New Today</span>
+                  <span className="text-xs font-medium text-green-600">{stats.todayAssigned}</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Navigation - Scrollable */}
@@ -200,8 +231,14 @@ export const DepartmentLayout: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+              {/* ✅ REAL-TIME NOTIFICATION BADGE */}
+              <button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
                 <Bell className="w-6 h-6" />
+                {stats.newAssignments > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                    {stats.newAssignments}
+                  </span>
+                )}
               </button>
             </div>
           </div>
