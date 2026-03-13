@@ -74,8 +74,8 @@ const CommunityFeed = () => {
             // Get location from address
             location: extractLocation(
               data.location?.displayAddress ||
-                data.location?.address ||
-                "Unknown Location"
+              data.location?.address ||
+              "Unknown Location"
             ),
             // Determine status display
             statusDisplay: getStatusDisplay(data.status || "pending"),
@@ -233,22 +233,22 @@ const CommunityFeed = () => {
       <div className="max-w-lg mx-auto">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-h2 font-semibold text-accent">Community Feed</h1>
-          <button className="p-2 hover:bg-subtle rounded-lg transition-colors">
-            <Search className="w-5 h-5 text-text-secondary" />
+          <h1 className="text-[2rem] font-black text-zinc-950" style={{ letterSpacing: '-0.04em' }}>Community Feed</h1>
+          <button className="p-2.5 bg-white border border-zinc-200/60 shadow-sm hover:bg-zinc-50 rounded-full transition-colors">
+            <Search className="w-5 h-5 text-zinc-600" />
           </button>
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-2 mb-6 overflow-x-auto">
+        <div className="flex space-x-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
           {filters.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setActiveFilter(filter.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors duration-200 ${
+              className={`px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 ${
                 activeFilter === filter.id
-                  ? "bg-accent text-white"
-                  : "bg-subtle text-text-secondary hover:bg-borders"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-white border border-zinc-200/60 text-zinc-600 hover:bg-zinc-50"
               }`}
             >
               {filter.label}
@@ -267,8 +267,8 @@ const CommunityFeed = () => {
               {activeFilter === "pending"
                 ? "No pending issues in your area"
                 : activeFilter === "resolved"
-                ? "No resolved issues to show"
-                : "Be the first to report a civic issue!"}
+                  ? "No resolved issues to show"
+                  : "Be the first to report a civic issue!"}
             </p>
           </div>
         ) : (
@@ -276,47 +276,46 @@ const CommunityFeed = () => {
             {feedItems.map((item) => (
               <div
                 key={item.id}
-                className="bg-surface border border-borders rounded-2xl overflow-hidden card-hover"
+                className="card-premium overflow-hidden group"
               >
                 {/* Card Header */}
-                <div className="flex items-center justify-between p-4">
+                <div className="flex items-center justify-between p-5">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-subtle rounded-full flex items-center justify-center mr-3">
+                    <div className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center mr-3 border border-zinc-200/50">
                       <span className="text-sm">👤</span>
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-accent">
+                      <div className="text-[15px] font-semibold text-zinc-900 tracking-tight leading-none mb-1">
                         {item.userDisplayName || "Anonymous Citizen"}
                       </div>
-                      <div className="text-xs text-text-secondary">
+                      <div className="text-[12px] font-medium text-zinc-500 tracking-tight">
                         📍 {item.location} • {item.timeAgo}
                       </div>
                     </div>
                   </div>
                   <div
-                    className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${item.categoryInfo.color}`}
+                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${item.categoryInfo.color}`}
                   >
-                    {item.categoryInfo.icon} {item.categoryInfo.label}
+                    {item.categoryInfo.icon} <span className="ml-1">{item.categoryInfo.label}</span>
                   </div>
                 </div>
 
                 {/* Issue Image */}
-                <div className="px-4 pb-3">
-                  <div className="w-full h-48 bg-subtle rounded-xl flex items-center justify-center overflow-hidden">
+                <div className="px-5 pb-4">
+                  <div className="w-full h-56 bg-zinc-100 rounded-2xl flex items-center justify-center overflow-hidden border border-zinc-200/50 relative">
                     {item.imageUrls && item.imageUrls.length > 0 ? (
                       <img
                         src={item.imageUrls[0]}
                         alt={item.title}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         onError={(e) => {
-                          // Fallback to emoji if image fails to load
                           e.target.style.display = "none";
                           e.target.nextSibling.style.display = "flex";
                         }}
                       />
                     ) : null}
                     <div
-                      className="w-full h-full flex items-center justify-center"
+                      className="w-full h-full flex items-center justify-center absolute inset-0"
                       style={{
                         display:
                           item.imageUrls && item.imageUrls.length > 0
@@ -324,7 +323,7 @@ const CommunityFeed = () => {
                             : "flex",
                       }}
                     >
-                      <span className="text-4xl">
+                      <span className="text-5xl opacity-80">
                         {getDefaultEmoji(item.category)}
                       </span>
                     </div>
@@ -332,62 +331,54 @@ const CommunityFeed = () => {
                 </div>
 
                 {/* Content */}
-                <div className="px-4 pb-4">
-                  <p className="text-sm text-accent mb-3 font-medium">
+                <div className="px-5 pb-5">
+                  <h3 className="text-[17px] font-semibold text-zinc-900 mb-2 tracking-tight leading-snug">
                     {item.title}
-                  </p>
+                  </h3>
                   {item.description && (
-                    <p className="text-xs text-text-secondary mb-3 line-clamp-2">
+                    <p className="text-[14px] text-zinc-600 mb-4 line-clamp-2 leading-relaxed tracking-tight">
                       {item.description}
                     </p>
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
+                    <div className="flex items-center space-x-3 mt-3">
                       {/* Upvote Button */}
                       <button
                         onClick={() => handleUpvote(item.id, item.hasUpvoted)}
-                        className={`flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors ${
-                          item.hasUpvoted
-                            ? "text-red-500"
-                            : "text-text-secondary"
-                        }`}
+                        className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors font-medium text-[13px] ${item.hasUpvoted
+                            ? "bg-red-50 text-red-600"
+                            : "bg-zinc-50 text-zinc-600 hover:bg-zinc-100 border border-zinc-200/50"
+                          }`}
                         disabled={!user}
                       >
                         <Heart
-                          className={`w-4 h-4 ${
-                            item.hasUpvoted ? "fill-current" : ""
-                          }`}
+                          className={`w-4 h-4 ${item.hasUpvoted ? "fill-current" : ""
+                            }`}
                         />
-                        <span className="text-xs font-medium">
+                        <span>
                           {item.upvoteCount}
                         </span>
                       </button>
 
                       {/* Comments placeholder */}
-                      <button className="flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors">
-                        <MessageCircle className="w-4 h-4 text-text-secondary" />
-                        <span className="text-xs font-medium text-text-secondary">
+                      <button className="flex items-center space-x-1.5 hover:bg-zinc-100 bg-zinc-50 border border-zinc-200/50 rounded-lg px-3 py-1.5 transition-colors">
+                        <MessageCircle className="w-4 h-4 text-zinc-500" />
+                        <span className="text-[13px] font-medium text-zinc-600">
                           {Math.floor(Math.random() * 10) + 1}
-                        </span>
-                      </button>
-
-                      {/* Location button */}
-                      <button className="flex items-center space-x-1 hover:bg-subtle rounded-lg px-2 py-1 transition-colors">
-                        <MapPin className="w-4 h-4 text-text-secondary" />
-                        <span className="text-xs font-medium text-text-secondary">
-                          View
                         </span>
                       </button>
                     </div>
 
                     {/* Status Badge */}
-                    <div
-                      className={`text-xs font-medium ${item.statusDisplay.color} flex items-center space-x-1`}
-                    >
-                      <span>{item.statusDisplay.emoji}</span>
-                      <span>{item.statusDisplay.label}</span>
+                    <div className="mt-3">
+                      <div
+                        className={`text-[12px] font-bold tracking-tight uppercase ${item.statusDisplay.color} flex items-center space-x-1 bg-white border border-current/10 px-2 py-1 rounded-md`}
+                      >
+                        <span>{item.statusDisplay.emoji}</span>
+                        <span className="ml-1">{item.statusDisplay.label}</span>
+                      </div>
                     </div>
                   </div>
                 </div>

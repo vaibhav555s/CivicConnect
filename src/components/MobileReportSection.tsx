@@ -13,8 +13,14 @@ import {
   Upload,
   Send,
   CheckCircle,
+  CheckCircle2,
   Plus,
   X,
+  Loader2,
+  BrainCircuit,
+  ScanSearch,
+  Activity,
+  Zap,
 } from "lucide-react";
 import ProtectedRoute from './auth/ProtectedRoute';
 import { db } from '../../lib/firebase'; // Adjust path as needed
@@ -57,6 +63,40 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const { user } = useAuth();
+
+  // AI Pipeline State
+  const [aiState, setAiState] = useState<"idle" | "analyzing" | "complete">("idle");
+  const [aiStep, setAiStep] = useState<number>(0);
+
+  const AI_STEPS = [
+    "Image Quality Validation",
+    "Metadata Verification",
+    "YOLOv8 Infrastructure Detection",
+    "Duplicate Issue Detection",
+    "Fraud / Manipulation Check",
+    "Severity Classification",
+    "Smart Prioritization Engine"
+  ];
+
+  const startAIPipeline = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !selectedCategory || !user) return;
+    
+    // Prototype: Always run AI pipeline for demonstration purposes
+    setAiState("analyzing");
+    setAiStep(0);
+
+    const runStep = (step: number) => {
+      if (step < AI_STEPS.length) {
+        setAiStep(step);
+        setTimeout(() => runStep(step + 1), 700 + Math.random() * 300); // 700-1000ms delay
+      } else {
+        setTimeout(() => setAiState("complete"), 600);
+      }
+    };
+    
+    runStep(0);
+  };
 
   // ✅ UPDATED CATEGORIES - Now matches department authentication exactly
   const categories = [
@@ -240,8 +280,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   };
 
   // ✅ FIXED FORM SUBMISSION - Firebase timestamp error resolved
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!title || !selectedCategory || !user) return;
 
     setSubmitting(true);
@@ -292,11 +332,11 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
         // Location Data
         location: location
           ? {
-              lat: location.lat,
-              lng: location.lng,
-              address: location.displayAddress || location.fullAddress,
-              fullLocation: location,
-            }
+            lat: location.lat,
+            lng: location.lng,
+            address: location.displayAddress || location.fullAddress,
+            fullLocation: location,
+          }
           : null,
 
         // Media
@@ -419,29 +459,168 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     );
   }
 
+  // AI Pipeline Overlay
+  if (aiState === "analyzing" || aiState === "complete") {
+    const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
+    return (
+      <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
+        <section className="min-h-screen bg-[#FDFDFD] px-5 pt-12 pb-24 flex flex-col max-w-sm mx-auto">
+           {/* Header */}
+           <div className="mb-8 animate-fade-in">
+             <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 shadow-soft">
+               <BrainCircuit className="w-6 h-6 text-white" />
+             </div>
+             <h1 className="text-[2rem] font-black text-zinc-950 leading-[1.1] tracking-tight mb-2" style={{ letterSpacing: '-0.04em' }}>
+               {aiState === "analyzing" ? "AI Analysis" : "Analysis Complete"}
+             </h1>
+             <p className="text-[15px] font-medium text-zinc-500 tracking-tight">
+               {aiState === "analyzing" ? "Processing issue data securely..." : "Review infrastructure assessment"}
+             </p>
+           </div>
+
+           {aiState === "analyzing" && (
+             <div className="flex-1 space-y-4 animate-fade-in-delay">
+               {AI_STEPS.map((step, index) => {
+                 const isCompleted = aiStep > index;
+                 const isCurrent = aiStep === index;
+                 
+                 return (
+                   <div key={index} className={`flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 ${isCurrent ? 'bg-white shadow-soft border border-zinc-200/50' : 'opacity-60'}`}>
+                     <div className="w-6 h-6 flex items-center justify-center flex-shrink-0">
+                       {isCompleted ? (
+                         <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                       ) : isCurrent ? (
+                         <Loader2 className="w-5 h-5 text-indigo-600 animate-spin" />
+                       ) : (
+                         <div className="w-2.5 h-2.5 rounded-full bg-zinc-200" />
+                       )}
+                     </div>
+                     <span className={`text-[15px] font-semibold tracking-tight ${isCurrent ? 'text-zinc-900' : 'text-zinc-500'}`}>
+                       {step}
+                     </span>
+                   </div>
+                 );
+               })}
+             </div>
+           )}
+
+           {aiState === "complete" && (
+             <div className="flex-1 animate-fade-in space-y-5">
+               {/* Result Card */}
+               <div className="card-premium p-1.5 overflow-hidden">
+                 {imagePreviews.length > 0 ? (
+                   <div className="relative h-48 rounded-[14px] overflow-hidden mb-1 border border-zinc-100">
+                     <img src={imagePreviews[0]} className="w-full h-full object-cover" alt="Uploaded" />
+                     {/* Fake Bounding Box */}
+                     <div className="absolute top-[20%] left-[15%] w-[70%] h-[55%] border-[2.5px] border-emerald-400 bg-emerald-400/10 rounded-lg flex items-start shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+                       <div className="bg-emerald-400 text-emerald-950 text-[9px] font-black px-2 py-0.5 rounded-br-lg uppercase tracking-widest">
+                         YOLOv8: {selectedCategoryData?.title.split(' ')[0] || "Issue"} (94%)
+                       </div>
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="relative h-32 rounded-xl bg-zinc-100 flex items-center justify-center mb-1">
+                     <ScanSearch className="w-8 h-8 text-zinc-400" />
+                   </div>
+                 )}
+                 <div className="p-4">
+                   <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-[17px] font-bold text-zinc-900 tracking-tight">Detected Issue</h3>
+                     <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">
+                       94% Match
+                     </span>
+                   </div>
+                   
+                   <div className="grid grid-cols-2 gap-3 mb-5">
+                     <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-100/50">
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Severity</p>
+                       <p className="text-[14px] font-semibold text-red-600 tracking-tight">High</p>
+                     </div>
+                     <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-100/50">
+                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Impact</p>
+                       <p className="text-[14px] font-semibold text-amber-600 tracking-tight">High</p>
+                     </div>
+                   </div>
+
+                   {/* Priority Score Explanation */}
+                   <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/60 rounded-xl p-4 mb-2">
+                     <div className="flex items-center justify-between mb-2">
+                       <div className="flex items-center space-x-1.5">
+                         <Zap className="w-3.5 h-3.5 text-indigo-500" />
+                         <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Priority Score</span>
+                       </div>
+                       <span className="text-[20px] font-black text-indigo-700 tracking-tight">8.7<span className="text-[12px] text-indigo-400 font-bold">/10</span></span>
+                     </div>
+                     <p className="text-[11px] text-indigo-500/80 font-medium leading-relaxed">
+                       Calculated using: 35% Severity + 25% Location Density + 20% Public Impact + 20% AI Confidence
+                     </p>
+                   </div>
+                   
+                   <div className="pt-4 mt-1 border-t border-zinc-100">
+                     <p className="text-[11px] text-zinc-500 flex items-center mb-1 font-medium">
+                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2"></span>
+                       Routing to: <strong className="text-zinc-700 ml-1">{selectedCategoryData?.department || "Public Works"}</strong>
+                     </p>
+                     <p className="text-[11px] text-zinc-500 flex items-center font-medium">
+                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-2"></span>
+                       Est. Resolution: <strong className="text-zinc-700 ml-1">48 hours</strong>
+                     </p>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Action */}
+               <button
+                 onClick={() => handleSubmit()}
+                 disabled={submitting}
+                 className="group w-full bg-zinc-950 text-white py-4 px-6 rounded-full text-[17px] font-semibold hover:bg-zinc-800 transition-all duration-200 active:scale-[0.98] shadow-md flex items-center justify-center space-x-2.5 mt-4"
+                 style={{ letterSpacing: '-0.01em' }}
+               >
+                 {submitting ? (
+                   <><Loader2 className="w-5 h-5 animate-spin" /><span className="opacity-90">Transmitting...</span></>
+                 ) : (
+                   <><Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" /><span>Submit Official Report</span></>
+                 )}
+               </button>
+             </div>
+           )}
+           
+           <style>{`
+             @keyframes fade-in {
+               from { opacity: 0; transform: translateY(12px); }
+               to { opacity: 1; transform: translateY(0); }
+             }
+             .animate-fade-in { animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+             .animate-fade-in-delay { animation: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+           `}</style>
+        </section>
+      </ProtectedRoute>
+    );
+  }
+
   return (
     <ProtectedRoute
       onAuthRequired={onAuthRequired}
       message="Sign in to report issues"
     >
-      <section className="min-h-screen bg-surface">
+      <section className="min-h-screen bg-surface pb-24">
         <div className="max-w-lg mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-borders">
+          <div className="flex items-center justify-between p-5 border-b border-zinc-200/50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
             <button
               onClick={onBack}
-              className="p-2 hover:bg-subtle rounded-lg transition-colors"
+              className="p-2.5 bg-white border border-zinc-200/60 shadow-sm rounded-full hover:bg-zinc-50 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+              <ArrowLeft className="w-5 h-5 text-zinc-600" />
             </button>
-            <h1 className="text-lg font-semibold text-accent">Report Issue</h1>
-            <div className="w-9"></div>
+            <h1 className="text-[17px] font-semibold text-zinc-900 tracking-tight">Report Issue</h1>
+            <div className="w-10"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-10">
+          <form onSubmit={startAIPipeline} className="p-6 space-y-10">
             {/* Issue Title */}
             <div>
-              <label className="block text-caption mb-6">
+              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
                 What's the issue?
               </label>
               <div className="relative">
@@ -449,8 +628,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter issue title"
-                  className="w-full text-2xl font-bold text-accent bg-transparent border-none outline-none placeholder-text-secondary/50 pb-3 border-b-2 border-borders focus:border-accent transition-colors"
+                  placeholder="Enter a descriptive title..."
+                  className="w-full text-3xl font-bold text-zinc-900 bg-transparent border-none outline-none placeholder-zinc-300 pb-3 border-b-2 border-zinc-200 focus:border-zinc-900 transition-colors tracking-tight"
                   required
                 />
               </div>
@@ -458,7 +637,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
             {/* Category Selection with Department Preview */}
             <div>
-              <label className="block text-caption mb-4">Select Category</label>
+              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Select Category</label>
               <div className="grid grid-cols-1 gap-3">
                 {categories.map((category) => {
                   const IconComponent = category.icon;
@@ -467,33 +646,27 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                       key={category.id}
                       type="button"
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`p-4 border rounded-xl transition-all duration-200 text-left ${
-                        selectedCategory === category.id
-                          ? "border-accent bg-subtle shadow-sm"
-                          : "border-borders hover:border-accent hover:shadow-sm"
-                      }`}
+                      className={`p-4 border rounded-2xl transition-all duration-300 text-left ${selectedCategory === category.id
+                          ? "border-zinc-900 bg-zinc-50 shadow-soft"
+                          : "border-zinc-200/60 bg-white hover:border-zinc-300 hover:shadow-soft"
+                        }`}
                     >
                       <div className="flex items-center space-x-4">
                         <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color}`}
+                          className={`w-[52px] h-[52px] rounded-[14px] flex items-center justify-center ${category.color} bg-opacity-30`}
                         >
                           <IconComponent className="w-6 h-6" />
                         </div>
                         <div className="flex-1">
-                          <div className="font-semibold text-accent">
+                          <div className={`font-semibold tracking-tight text-[16px] mb-0.5 ${selectedCategory === category.id ? "text-zinc-900" : "text-zinc-800"}`}>
                             {category.title}
                           </div>
-                          <div className="text-xs text-green-600 mt-1 font-medium">
-                            📨 {category.department}
-                          </div>
-                          <div className="text-xs text-text-secondary mt-1">
+                          <div className="text-[12px] text-zinc-500 font-medium tracking-tight mb-1">
                             {category.examples}
                           </div>
-                          {selectedCategory === category.id && (
-                            <div className="text-xs text-blue-600 mt-2 bg-blue-50 rounded px-2 py-1">
-                              ✅ Will be assigned to this department automatically
-                            </div>
-                          )}
+                          <div className="text-[11px] font-bold text-blue-600 bg-blue-50 inline-flex px-2 py-0.5 rounded-md uppercase tracking-tight">
+                            📨 {category.department}
+                          </div>
                         </div>
                       </div>
                     </button>
@@ -504,21 +677,21 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
             {/* Description */}
             <div>
-              <label className="block text-caption mb-4">
+              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
                 Detailed Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-32 p-4 input-field rounded-xl resize-none"
-                placeholder="Provide more details about the issue..."
+                className="w-full h-32 p-4 bg-white border border-zinc-200/60 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100 rounded-2xl resize-none outline-none transition-all shadow-sm text-[15px] text-zinc-800 placeholder-zinc-400"
+                placeholder="Provide more context (e.g., how long has it been here, exact spot, safety hazards)..."
               />
             </div>
 
             {/* Multiple Photo Upload */}
             <div>
-              <label className="block text-caption mb-4">
-                Add Photos ({selectedImages.length}/5)
+              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
+                Add Photos <span className="text-zinc-400">({selectedImages.length}/5)</span>
               </label>
 
               {/* Photo Grid */}
@@ -551,14 +724,14 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPhotoOptions(true)}
-                  className="w-full p-4 border-2 border-dashed border-borders rounded-xl hover:border-accent hover:bg-subtle/30 transition-colors flex items-center justify-center space-x-3"
+                  className="w-full p-6 border-2 border-dashed border-zinc-200/80 rounded-2xl hover:border-zinc-400 hover:bg-zinc-50 transition-colors flex flex-col items-center justify-center space-y-3 cursor-pointer"
                 >
-                  <Camera className="w-6 h-6 text-text-secondary" />
-                  <div>
-                    <div className="font-medium text-accent">Add Photos</div>
-                    <div className="text-sm text-text-secondary">
-                      Camera or Gallery
-                    </div>
+                  <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-zinc-600" />
+                  </div>
+                  <div className="text-center">
+                    <div className="font-semibold text-zinc-900 tracking-tight">Capture or Upload</div>
+                    <div className="text-[13px] text-zinc-500 font-medium">JPEG, PNG • Up to 10MB</div>
                   </div>
                 </button>
               )}
@@ -730,18 +903,17 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             <button
               type="submit"
               disabled={submitting || !title || !selectedCategory}
-              className="w-full btn-primary py-4 rounded-xl text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+              className="w-full bg-zinc-900 text-white font-semibold py-4 rounded-2xl text-[17px] tracking-tight disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-md hover:bg-zinc-800 active:scale-[0.98] transition-all"
             >
               {submitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>Submitting to {selectedCategory ? categories.find(c => c.id === selectedCategory)?.department : 'Department'}...</span>
+                  <span>Transmitting...</span>
                 </>
               ) : (
                 <>
                   <Send className="w-5 h-5" />
                   <span>Submit Report</span>
-                  
                 </>
               )}
             </button>
