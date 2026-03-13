@@ -11,6 +11,7 @@ import Profile from "./components/Profile";
 import MobileReportSection from "./components/MobileReportSection";
 import IssueDetail from "./components/IssueDetail";
 import AuthPage from "./components/auth/AuthPage";
+import AIAnalysisDashboard from "./components/AIAnalysisDashboard";
 
 // Admin Components
 import { AdminRoutes } from "./routes/AdminRoutes";
@@ -23,6 +24,7 @@ const UserApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState("home");
   const [showIssueDetail, setShowIssueDetail] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
+  const [pendingReport, setPendingReport] = useState<any>(null);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -57,10 +59,23 @@ const UserApp: React.FC = () => {
           <MobileReportSection
             onBack={() => setActiveTab("home")}
             onAuthRequired={handleAuthRequired}
+            onNavigate={handleTabChange}
+            setPendingReport={setPendingReport}
           />
         );
       case "feed":
         return <CommunityFeed />;
+      case "ai":
+        return (
+          <AIAnalysisDashboard 
+            onBack={() => setActiveTab("home")} 
+            pendingReport={pendingReport}
+            onComplete={() => {
+              setPendingReport(null);
+              setActiveTab("home");
+            }}
+          />
+        );
       case "reports":
         return (
           <MyReports

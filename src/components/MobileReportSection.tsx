@@ -12,42 +12,26 @@ import {
   Shield,
   Upload,
   Send,
-  CheckCircle,
   CheckCircle2,
-  Plus,
-  X,
   Loader2,
   BrainCircuit,
-  ScanSearch,
-  Activity,
-  Zap,
+  X,
 } from "lucide-react";
 import ProtectedRoute from './auth/ProtectedRoute';
-import { db } from '../../lib/firebase'; // Adjust path as needed
 import { useAuth } from '../contexts/AuthContext';
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
 
-import { uploadImageToCloudinary, createSignatureGenerator } from "../lib/cloudinary";
-
-const CLOUDINARY_CLOUD_NAME = "civicconnect";
-const CLOUDINARY_API_KEY = "415284245642869";
-const CLOUDINARY_API_SECRET = "SQJRqJ9KaexFBGQcULP3o7HFwU8"; // ⚠ unsafe in frontend
-
-interface MobileReportSectionProps {
+export interface MobileReportSectionProps {
   onBack: () => void;
   onAuthRequired: () => void;
+  onNavigate?: (tab: string) => void;
+  setPendingReport?: (report: any) => void;
 }
 
 const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   onBack,
   onAuthRequired,
+  onNavigate,
+  setPendingReport,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [title, setTitle] = useState<string>("");
@@ -60,13 +44,11 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
   const [locationPermissionStatus, setLocationPermissionStatus] = useState<
     "idle" | "requesting" | "granted" | "denied"
   >("idle");
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
   const { user } = useAuth();
 
   // AI Pipeline State
   const [aiState, setAiState] = useState<"idle" | "analyzing" | "complete">("idle");
-  const [aiStep, setAiStep] = useState<number>(0);
+  const [pipelineStep, setPipelineStep] = useState<number>(0);
 
   const AI_STEPS = [
     "Image Quality Validation",
@@ -78,25 +60,6 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     "Smart Prioritization Engine"
   ];
 
-  const startAIPipeline = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !selectedCategory || !user) return;
-    
-    // Prototype: Always run AI pipeline for demonstration purposes
-    setAiState("analyzing");
-    setAiStep(0);
-
-    const runStep = (step: number) => {
-      if (step < AI_STEPS.length) {
-        setAiStep(step);
-        setTimeout(() => runStep(step + 1), 700 + Math.random() * 300); // 700-1000ms delay
-      } else {
-        setTimeout(() => setAiState("complete"), 600);
-      }
-    };
-    
-    runStep(0);
-  };
 
   // ✅ UPDATED CATEGORIES - Now matches department authentication exactly
   const categories = [
@@ -149,6 +112,48 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       examples: "Unsafe structures, security concerns",
     },
   ];
+
+  // Auto-proceed when AI scanning is complete
+  React.useEffect(() => {
+    if (aiState === "complete") {
+      proceedToAnalysis();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiState]);
+
+  const proceedToAnalysis = () => {
+    const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
+    const assignedDepartment = selectedCategoryData?.department || "General";
+
+    if (setPendingReport && user) {
+      setPendingReport({
+        title: title.trim(),
+        description: description.trim(),
+        selectedCategory,
+        selectedCategoryData,
+        assignedDepartment,
+        selectedImages,
+        imagePreviews,
+        location,
+        user,
+      });
+    }
+
+    // Reset local form state
+    setTitle("");
+    setDescription("");
+    setSelectedCategory("");
+    setSelectedImages([]);
+    setImagePreviews([]);
+    setLocation(null);
+    setLocationPermissionStatus("idle");
+
+    if (onNavigate) {
+      onNavigate("ai");
+    } else {
+      onBack();
+    }
+  };
 
   // Handle multiple image selection
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,189 +284,30 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     );
   };
 
-  // ✅ FIXED FORM SUBMISSION - Firebase timestamp error resolved
-  const handleSubmit = async (e?: React.FormEvent) => {
+  // Form submission handled by AI Dashboard now
+  const handleSubmitPrompt = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!title || !selectedCategory || !user) return;
+    
+    setAiState("analyzing");
+    setPipelineStep(0);
 
-    setSubmitting(true);
-
-    try {
-      // Upload images to Cloudinary
-      const imageFileNames = selectedImages.map((file) => file.name);
-      let imageUrls: string[] = [];
-      let imagePublicIds: string[] = [];
-
-      if (selectedImages.length > 0) {
-        const generate = createSignatureGenerator(CLOUDINARY_API_SECRET);
-        const folder = "civicconnect/reports";
-
-        const results = await Promise.all(
-          selectedImages.map((file) =>
-            uploadImageToCloudinary(file, {
-              cloudName: CLOUDINARY_CLOUD_NAME,
-              apiKey: CLOUDINARY_API_KEY,
-              folder,
-              generateSignature: (params) => generate(params),
-            })
-          )
-        );
-
-        imageUrls = results.map((r) => r.url);
-        imagePublicIds = results.map((r) => r.publicId);
+    const runStep = (step: number) => {
+      if (step < AI_STEPS.length) {
+        setPipelineStep(step);
+        setTimeout(() => runStep(step + 1), 700 + Math.random() * 300); // 700-1000ms delay
+      } else {
+        setTimeout(() => setAiState("complete"), 600);
       }
-
-      // Get assigned department from selected category
-      const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
-      const assignedDepartment = selectedCategoryData?.department || "General";
-
-      console.log('🎯 Auto-assigning to department:', assignedDepartment);
-
-      // ✅ FIXED REPORT DATA - No serverTimestamp() in arrays
-      const reportData = {
-        // User Association
-        userId: user.uid,
-        userEmail: user.email,
-        userDisplayName: user.displayName || "Anonymous",
-
-        // Report Details
-        title: title.trim(),
-        description: description.trim(),
-        category: selectedCategory,
-
-        // Location Data
-        location: location
-          ? {
-            lat: location.lat,
-            lng: location.lng,
-            address: location.displayAddress || location.fullAddress,
-            fullLocation: location,
-          }
-          : null,
-
-        // Media
-        imageFileNames: imageFileNames,
-        imageUrls: imageUrls,
-        imagePublicIds: imagePublicIds,
-
-        // Status & Timestamps
-        status: "pending",
-        priority: "medium",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-
-        // ✅ ASSIGNMENT TRACKING - No arrays with serverTimestamp()
-        assignedDepartment: assignedDepartment,
-        assignedAt: serverTimestamp(),
-        assignedBy: "system",
-
-        // Department Communication (empty arrays are fine)
-        departmentComments: [],
-        beforeAfterImages: { before: [], after: [] },
-
-        // 🔔 REAL-TIME NOTIFICATION FLAGS
-        isNewAssignment: true,
-        departmentNotified: false,
-        notificationSent: false,
-
-        // Analytics
-        reportId: null, // Will be set after document creation
-      };
-
-      console.log('💾 Saving report data to Firebase...');
-
-      // Save to Firestore
-      const docRef = await addDoc(collection(db, "reports"), reportData);
-
-      // ✅ ADD ASSIGNMENT HISTORY AFTER DOCUMENT CREATION (FIXED)
-      await updateDoc(docRef, {
-        reportId: docRef.id,
-        assignmentHistory: [
-          {
-            department: assignedDepartment,
-            assignedBy: "system",
-            assignedAt: new Date(), // ✅ Use regular Date() instead of serverTimestamp()
-            reason: "Auto-assigned based on category",
-          },
-        ],
-      });
-
-      console.log('✅ Report saved with ID:', docRef.id);
-      console.log('📨 Auto-assigned to department:', assignedDepartment);
-      console.log('🔔 Real-time notification will be sent to department dashboard');
-
-      // Update user stats
-      await updateUserStats(user.uid);
-
-      setSuccess(true);
-
-      // Reset form after success
-      setTimeout(() => {
-        setSuccess(false);
-        setTitle("");
-        setDescription("");
-        setSelectedCategory("");
-        setSelectedImages([]);
-        setImagePreviews([]);
-        setLocation(null);
-        setLocationPermissionStatus("idle");
-        onBack();
-      }, 2500);
-    } catch (error) {
-      console.error("❌ Error saving report:", error);
-      console.error("❌ Error details:", {
-        code: error.code,
-        message: error.message,
-      });
-      alert("Failed to submit report. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+    };
+    
+    runStep(0);
   };
 
-  // Function to update user statistics
-  const updateUserStats = async (userId: string) => {
-    try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, {
-        "stats.reportsSubmitted": increment(1),
-        updatedAt: serverTimestamp(),
-      });
-    } catch (error) {
-      console.error("Error updating user stats:", error);
-    }
-  };
-
-  // Success screen
-  if (success) {
-    return (
-      <section className="min-h-screen bg-surface flex items-center justify-center px-4">
-        <div className="text-center animate-fade-in">
-          <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-emerald-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-accent mb-2">
-            Issue Reported Successfully!
-          </h1>
-          <p className="text-text-secondary mb-2">
-            Your report has been submitted to the relevant department
-          </p>
-          {selectedCategory && (
-            <div className="text-sm text-blue-600 bg-blue-50 rounded-lg px-3 py-2 mb-4 inline-block">
-              📨 Assigned to: {categories.find(c => c.id === selectedCategory)?.department}
-            </div>
-          )}
-          <div className="text-sm text-text-secondary">
-            Redirecting to home...
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Mobile Report Section renders the form
 
   // AI Pipeline Overlay
   if (aiState === "analyzing" || aiState === "complete") {
-    const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
     return (
       <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
         <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }} className="px-5 pt-10 pb-8 flex flex-col">
@@ -481,8 +327,8 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
            {aiState === "analyzing" && (
              <div className="flex-1 space-y-4 animate-fade-in-delay">
                {AI_STEPS.map((step, index) => {
-                 const isCompleted = aiStep > index;
-                 const isCurrent = aiStep === index;
+                 const isCompleted = pipelineStep > index;
+                 const isCurrent = pipelineStep === index;
                  
                  return (
                    <div key={index} className={`flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 ${isCurrent ? 'bg-white shadow-soft border border-zinc-200/50' : 'opacity-60'}`}>
@@ -505,83 +351,10 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
            )}
 
            {aiState === "complete" && (
-             <div className="flex-1 animate-fade-in space-y-5">
-               {/* Result Card */}
-               <div className="card-premium p-1.5 overflow-hidden">
-                 {imagePreviews.length > 0 ? (
-                   <div className="relative h-48 rounded-[14px] overflow-hidden mb-1 border border-zinc-100">
-                     <img src={imagePreviews[0]} className="w-full h-full object-cover" alt="Uploaded" />
-                     {/* Fake Bounding Box */}
-                     <div className="absolute top-[20%] left-[15%] w-[70%] h-[55%] border-[2.5px] border-emerald-400 bg-emerald-400/10 rounded-lg flex items-start shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                       <div className="bg-emerald-400 text-emerald-950 text-[9px] font-black px-2 py-0.5 rounded-br-lg uppercase tracking-widest">
-                         YOLOv8: {selectedCategoryData?.title.split(' ')[0] || "Issue"} (94%)
-                       </div>
-                     </div>
-                   </div>
-                 ) : (
-                   <div className="relative h-32 rounded-xl bg-zinc-100 flex items-center justify-center mb-1">
-                     <ScanSearch className="w-8 h-8 text-zinc-400" />
-                   </div>
-                 )}
-                 <div className="p-4">
-                   <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-[17px] font-bold text-zinc-900 tracking-tight">Detected Issue</h3>
-                     <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">
-                       94% Match
-                     </span>
-                   </div>
-                   
-                   <div className="grid grid-cols-2 gap-3 mb-5">
-                     <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-100/50">
-                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Severity</p>
-                       <p className="text-[14px] font-semibold text-red-600 tracking-tight">High</p>
-                     </div>
-                     <div className="bg-zinc-50 rounded-xl p-3 border border-zinc-100/50">
-                       <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mb-1">Impact</p>
-                       <p className="text-[14px] font-semibold text-amber-600 tracking-tight">High</p>
-                     </div>
-                   </div>
-
-                   {/* Priority Score Explanation */}
-                   <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100/60 rounded-xl p-4 mb-2">
-                     <div className="flex items-center justify-between mb-2">
-                       <div className="flex items-center space-x-1.5">
-                         <Zap className="w-3.5 h-3.5 text-indigo-500" />
-                         <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Priority Score</span>
-                       </div>
-                       <span className="text-[20px] font-black text-indigo-700 tracking-tight">8.7<span className="text-[12px] text-indigo-400 font-bold">/10</span></span>
-                     </div>
-                     <p className="text-[11px] text-indigo-500/80 font-medium leading-relaxed">
-                       Calculated using: 35% Severity + 25% Location Density + 20% Public Impact + 20% AI Confidence
-                     </p>
-                   </div>
-                   
-                   <div className="pt-4 mt-1 border-t border-zinc-100">
-                     <p className="text-[11px] text-zinc-500 flex items-center mb-1 font-medium">
-                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-2"></span>
-                       Routing to: <strong className="text-zinc-700 ml-1">{selectedCategoryData?.department || "Public Works"}</strong>
-                     </p>
-                     <p className="text-[11px] text-zinc-500 flex items-center font-medium">
-                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mr-2"></span>
-                       Est. Resolution: <strong className="text-zinc-700 ml-1">48 hours</strong>
-                     </p>
-                   </div>
-                 </div>
-               </div>
-
-               {/* Action */}
-               <button
-                 onClick={() => handleSubmit()}
-                 disabled={submitting}
-                 className="group w-full bg-zinc-950 text-white py-4 px-6 rounded-full text-[17px] font-semibold hover:bg-zinc-800 transition-all duration-200 active:scale-[0.98] shadow-md flex items-center justify-center space-x-2.5 mt-4"
-                 style={{ letterSpacing: '-0.01em' }}
-               >
-                 {submitting ? (
-                   <><Loader2 className="w-5 h-5 animate-spin" /><span className="opacity-90">Transmitting...</span></>
-                 ) : (
-                   <><Send className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" /><span>Submit Official Report</span></>
-                 )}
-               </button>
+             <div className="flex-1 animate-fade-in space-y-5 flex flex-col items-center justify-center mt-12 pb-12">
+               <Loader2 className="w-10 h-10 text-[#7C6FFF] animate-spin mb-4" />
+               <p className="text-[17px] font-bold text-white tracking-tight">AI Analysis Ready</p>
+               <p className="text-[14px] text-zinc-500 font-medium">Redirecting to Dashboard...</p>
              </div>
            )}
            
@@ -618,7 +391,7 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             <div className="w-10"></div>
           </div>
 
-          <form onSubmit={startAIPipeline} className="p-5 space-y-8">
+          <form onSubmit={handleSubmitPrompt} className="px-5 pb-8 animate-fade-in-delay">
             {/* Issue Title */}
             <div>
               <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
@@ -903,10 +676,10 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
             {/* Enhanced Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !title || !selectedCategory}
+              disabled={aiState !== "idle" || !title || !selectedCategory}
               className="w-full bg-zinc-900 text-white font-semibold py-4 rounded-2xl text-[17px] tracking-tight disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 shadow-md hover:bg-zinc-800 active:scale-[0.98] transition-all"
             >
-              {submitting ? (
+              {aiState !== "idle" ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                   <span>Transmitting...</span>

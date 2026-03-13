@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Camera, Cpu, BarChart3, Map } from 'lucide-react';
+import { Home, Camera, Cpu, Activity, Map } from 'lucide-react';
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -9,8 +9,8 @@ interface BottomNavigationProps {
 const tabs = [
   { id: 'home',    icon: Home,    label: 'Home'   },
   { id: 'report',  icon: Camera,  label: 'Report' },
-  { id: 'feed',    icon: Cpu,     label: 'AI'     },
-  { id: 'reports', icon: BarChart3, label: 'Track' },
+  { id: 'ai',      icon: Cpu,     label: 'AI'     },
+  { id: 'feed',    icon: Activity,label: 'Feed'   },
   { id: 'profile', icon: Map,     label: 'Map'    },
 ];
 
