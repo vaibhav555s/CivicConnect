@@ -464,13 +464,13 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
     const selectedCategoryData = categories.find((cat) => cat.id === selectedCategory);
     return (
       <ProtectedRoute onAuthRequired={onAuthRequired} message="Sign in to report issues">
-        <section className="min-h-screen bg-[#FDFDFD] px-5 pt-12 pb-24 flex flex-col max-w-sm mx-auto">
+        <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }} className="px-5 pt-10 pb-8 flex flex-col">
            {/* Header */}
            <div className="mb-8 animate-fade-in">
-             <div className="w-12 h-12 bg-zinc-900 rounded-2xl flex items-center justify-center mb-4 shadow-soft">
+             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: '#7C6FFF' }}>
                <BrainCircuit className="w-6 h-6 text-white" />
              </div>
-             <h1 className="text-[2rem] font-black text-zinc-950 leading-[1.1] tracking-tight mb-2" style={{ letterSpacing: '-0.04em' }}>
+             <h1 className="text-[2rem] font-black text-white leading-[1.1] tracking-tight mb-2" style={{ letterSpacing: '-0.04em' }}>
                {aiState === "analyzing" ? "AI Analysis" : "Analysis Complete"}
              </h1>
              <p className="text-[15px] font-medium text-zinc-500 tracking-tight">
@@ -603,24 +603,25 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
       onAuthRequired={onAuthRequired}
       message="Sign in to report issues"
     >
-      <section className="min-h-screen bg-surface pb-24">
+      <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }}>
         <div className="max-w-lg mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between p-5 border-b border-zinc-200/50 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+          {/* Sticky dark header with back button */}
+          <div className="flex items-center justify-between p-5 sticky top-0 z-10" style={{ background: 'rgba(15,15,19,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <button
               onClick={onBack}
-              className="p-2.5 bg-white border border-zinc-200/60 shadow-sm rounded-full hover:bg-zinc-50 transition-colors"
+              className="p-2.5 rounded-full transition-colors active:scale-95"
+              style={{ background: '#1C1C24' }}
             >
-              <ArrowLeft className="w-5 h-5 text-zinc-600" />
+              <ArrowLeft className="w-5 h-5 text-white" />
             </button>
-            <h1 className="text-[17px] font-semibold text-zinc-900 tracking-tight">Report Issue</h1>
+            <h1 className="text-[17px] font-bold text-white tracking-tight">Report Issue</h1>
             <div className="w-10"></div>
           </div>
 
-          <form onSubmit={startAIPipeline} className="p-6 space-y-10">
+          <form onSubmit={startAIPipeline} className="p-5 space-y-8">
             {/* Issue Title */}
             <div>
-              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                 What's the issue?
               </label>
               <div className="relative">
@@ -629,42 +630,40 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Enter a descriptive title..."
-                  className="w-full text-3xl font-bold text-zinc-900 bg-transparent border-none outline-none placeholder-zinc-300 pb-3 border-b-2 border-zinc-200 focus:border-zinc-900 transition-colors tracking-tight"
+                  className="w-full text-2xl font-bold bg-transparent border-none outline-none pb-3 transition-colors tracking-tight"
+                  style={{ color: 'white', borderBottom: '2px solid rgba(255,255,255,0.15)', caretColor: '#7C6FFF' }}
                   required
                 />
               </div>
             </div>
 
-            {/* Category Selection with Department Preview */}
+            {/* Category Selection */}
             <div>
-              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Select Category</label>
-              <div className="grid grid-cols-1 gap-3">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">Select Category</label>
+              <div className="grid grid-cols-1 gap-2.5">
                 {categories.map((category) => {
                   const IconComponent = category.icon;
+                  const isSelected = selectedCategory === category.id;
                   return (
                     <button
                       key={category.id}
                       type="button"
                       onClick={() => setSelectedCategory(category.id)}
-                      className={`p-4 border rounded-2xl transition-all duration-300 text-left ${selectedCategory === category.id
-                          ? "border-zinc-900 bg-zinc-50 shadow-soft"
-                          : "border-zinc-200/60 bg-white hover:border-zinc-300 hover:shadow-soft"
-                        }`}
+                      className="p-4 rounded-2xl transition-all duration-200 text-left active:scale-[0.98]"
+                      style={{ background: isSelected ? 'rgba(124,111,255,0.15)' : '#1C1C24', border: isSelected ? '1.5px solid rgba(124,111,255,0.6)' : '1.5px solid transparent' }}
                     >
                       <div className="flex items-center space-x-4">
-                        <div
-                          className={`w-[52px] h-[52px] rounded-[14px] flex items-center justify-center ${category.color} bg-opacity-30`}
-                        >
-                          <IconComponent className="w-6 h-6" />
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${category.color} bg-opacity-20`}>
+                          <IconComponent className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <div className={`font-semibold tracking-tight text-[16px] mb-0.5 ${selectedCategory === category.id ? "text-zinc-900" : "text-zinc-800"}`}>
+                          <div className={`font-semibold tracking-tight text-[15px] mb-0.5 ${isSelected ? 'text-white' : 'text-zinc-300'}`}>
                             {category.title}
                           </div>
-                          <div className="text-[12px] text-zinc-500 font-medium tracking-tight mb-1">
+                          <div className="text-[11px] text-zinc-600 font-medium">
                             {category.examples}
                           </div>
-                          <div className="text-[11px] font-bold text-blue-600 bg-blue-50 inline-flex px-2 py-0.5 rounded-md uppercase tracking-tight">
+                          <div className="text-[10px] font-bold mt-1 px-2 py-0.5 rounded-md inline-block" style={{ background: 'rgba(124,111,255,0.15)', color: '#7C6FFF' }}>
                             📨 {category.department}
                           </div>
                         </div>
@@ -677,14 +676,15 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
 
             {/* Description */}
             <div>
-              <label className="block text-[13px] font-bold text-zinc-500 uppercase tracking-widest mb-4">
+              <label className="block text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-3">
                 Detailed Description
               </label>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full h-32 p-4 bg-white border border-zinc-200/60 focus:border-zinc-400 focus:ring-4 focus:ring-zinc-100 rounded-2xl resize-none outline-none transition-all shadow-sm text-[15px] text-zinc-800 placeholder-zinc-400"
-                placeholder="Provide more context (e.g., how long has it been here, exact spot, safety hazards)..."
+                className="w-full h-28 p-4 rounded-2xl resize-none outline-none transition-all text-[15px] placeholder-zinc-700"
+                style={{ background: '#1C1C24', color: 'white', border: '1.5px solid rgba(255,255,255,0.08)' }}
+                placeholder="Provide more context (e.g., how long, exact spot, safety hazards)..."
               />
             </div>
 
@@ -724,14 +724,15 @@ const MobileReportSection: React.FC<MobileReportSectionProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowPhotoOptions(true)}
-                  className="w-full p-6 border-2 border-dashed border-zinc-200/80 rounded-2xl hover:border-zinc-400 hover:bg-zinc-50 transition-colors flex flex-col items-center justify-center space-y-3 cursor-pointer"
+                  className="w-full p-5 rounded-2xl flex flex-col items-center justify-center space-y-3 cursor-pointer transition-colors active:scale-[0.98]"
+                  style={{ border: '2px dashed rgba(255,255,255,0.12)', background: '#1C1C24' }}
                 >
-                  <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-zinc-600" />
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(124,111,255,0.15)' }}>
+                    <Camera className="w-5 h-5" style={{ color: '#7C6FFF' }} />
                   </div>
                   <div className="text-center">
-                    <div className="font-semibold text-zinc-900 tracking-tight">Capture or Upload</div>
-                    <div className="text-[13px] text-zinc-500 font-medium">JPEG, PNG • Up to 10MB</div>
+                    <div className="font-semibold text-zinc-300 tracking-tight">Capture or Upload</div>
+                    <div className="text-[13px] text-zinc-600 font-medium">JPEG, PNG • Up to 10MB</div>
                   </div>
                 </button>
               )}

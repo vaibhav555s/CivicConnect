@@ -229,13 +229,13 @@ const CommunityFeed = () => {
   }
 
   return (
-    <section className="px-4 pt-6 pb-12">
+    <section style={{ background: '#0F0F13', minHeight: '100%', fontFamily: "'Inter', sans-serif" }} className="px-4 pt-6 pb-6">
       <div className="max-w-lg mx-auto">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-[2rem] font-black text-zinc-950" style={{ letterSpacing: '-0.04em' }}>Community Feed</h1>
-          <button className="p-2.5 bg-white border border-zinc-200/60 shadow-sm hover:bg-zinc-50 rounded-full transition-colors">
-            <Search className="w-5 h-5 text-zinc-600" />
+          <h1 className="text-[2rem] font-black text-white" style={{ letterSpacing: '-0.04em' }}>Community Feed</h1>
+          <button className="p-2.5 rounded-full transition-colors" style={{ background: '#1C1C24' }}>
+            <Search className="w-5 h-5 text-zinc-400" />
           </button>
         </div>
 
@@ -247,9 +247,10 @@ const CommunityFeed = () => {
               onClick={() => setActiveFilter(filter.id)}
               className={`px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all duration-200 ${
                 activeFilter === filter.id
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "bg-white border border-zinc-200/60 text-zinc-600 hover:bg-zinc-50"
+                  ? 'text-white'
+                  : 'text-zinc-500 hover:text-zinc-300'
               }`}
+              style={activeFilter === filter.id ? { background: '#7C6FFF' } : { background: '#1C1C24' }}
             >
               {filter.label}
             </button>
@@ -276,16 +277,17 @@ const CommunityFeed = () => {
             {feedItems.map((item) => (
               <div
                 key={item.id}
-                className="card-premium overflow-hidden group"
+                className="overflow-hidden rounded-2xl"
+                style={{ background: '#1C1C24' }}
               >
                 {/* Card Header */}
-                <div className="flex items-center justify-between p-5">
+                <div className="flex items-center justify-between p-4">
                   <div className="flex items-center">
-                    <div className="w-9 h-9 bg-zinc-100 rounded-full flex items-center justify-center mr-3 border border-zinc-200/50">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center mr-3" style={{ background: '#2A2A35' }}>
                       <span className="text-sm">👤</span>
                     </div>
                     <div>
-                      <div className="text-[15px] font-semibold text-zinc-900 tracking-tight leading-none mb-1">
+                      <div className="text-[15px] font-semibold text-white tracking-tight leading-none mb-1">
                         {item.userDisplayName || "Anonymous Citizen"}
                       </div>
                       <div className="text-[12px] font-medium text-zinc-500 tracking-tight">
@@ -293,92 +295,52 @@ const CommunityFeed = () => {
                       </div>
                     </div>
                   </div>
-                  <div
-                    className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${item.categoryInfo.color}`}
-                  >
+                  <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${item.categoryInfo.color}`}>
                     {item.categoryInfo.icon} <span className="ml-1">{item.categoryInfo.label}</span>
                   </div>
                 </div>
 
                 {/* Issue Image */}
-                <div className="px-5 pb-4">
-                  <div className="w-full h-56 bg-zinc-100 rounded-2xl flex items-center justify-center overflow-hidden border border-zinc-200/50 relative">
+                <div className="px-4 pb-4">
+                  <div className="w-full h-48 rounded-xl flex items-center justify-center overflow-hidden relative" style={{ background: '#2A2A35' }}>
                     {item.imageUrls && item.imageUrls.length > 0 ? (
-                      <img
-                        src={item.imageUrls[0]}
-                        alt={item.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.nextSibling.style.display = "flex";
-                        }}
-                      />
+                      <img src={item.imageUrls[0]} alt={item.title} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : null}
-                    <div
-                      className="w-full h-full flex items-center justify-center absolute inset-0"
-                      style={{
-                        display:
-                          item.imageUrls && item.imageUrls.length > 0
-                            ? "none"
-                            : "flex",
-                      }}
-                    >
-                      <span className="text-5xl opacity-80">
-                        {getDefaultEmoji(item.category)}
-                      </span>
-                    </div>
+                    {(!item.imageUrls || item.imageUrls.length === 0) && (
+                      <span className="text-5xl opacity-60">{getDefaultEmoji(item.category)}</span>
+                    )}
                   </div>
                 </div>
 
                 {/* Content */}
-                <div className="px-5 pb-5">
-                  <h3 className="text-[17px] font-semibold text-zinc-900 mb-2 tracking-tight leading-snug">
-                    {item.title}
-                  </h3>
+                <div className="px-4 pb-4">
+                  <h3 className="text-[17px] font-semibold text-white mb-2 tracking-tight leading-snug">{item.title}</h3>
                   {item.description && (
-                    <p className="text-[14px] text-zinc-600 mb-4 line-clamp-2 leading-relaxed tracking-tight">
-                      {item.description}
-                    </p>
+                    <p className="text-[14px] text-zinc-500 mb-4 line-clamp-2 leading-relaxed">{item.description}</p>
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between pt-1 border-t border-zinc-100">
-                    <div className="flex items-center space-x-3 mt-3">
-                      {/* Upvote Button */}
+                  <div className="flex items-center justify-between pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleUpvote(item.id, item.hasUpvoted)}
-                        className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors font-medium text-[13px] ${item.hasUpvoted
-                            ? "bg-red-50 text-red-600"
-                            : "bg-zinc-50 text-zinc-600 hover:bg-zinc-100 border border-zinc-200/50"
-                          }`}
+                        className={`flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors font-medium text-[13px] ${
+                          item.hasUpvoted ? 'text-red-400' : 'text-zinc-400 hover:text-zinc-200'
+                        }`}
+                        style={{ background: item.hasUpvoted ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)' }}
                         disabled={!user}
                       >
-                        <Heart
-                          className={`w-4 h-4 ${item.hasUpvoted ? "fill-current" : ""
-                            }`}
-                        />
-                        <span>
-                          {item.upvoteCount}
-                        </span>
+                        <Heart className={`w-4 h-4 ${item.hasUpvoted ? 'fill-current' : ''}`} />
+                        <span>{item.upvoteCount}</span>
                       </button>
-
-                      {/* Comments placeholder */}
-                      <button className="flex items-center space-x-1.5 hover:bg-zinc-100 bg-zinc-50 border border-zinc-200/50 rounded-lg px-3 py-1.5 transition-colors">
-                        <MessageCircle className="w-4 h-4 text-zinc-500" />
-                        <span className="text-[13px] font-medium text-zinc-600">
-                          {Math.floor(Math.random() * 10) + 1}
-                        </span>
+                      <button className="flex items-center space-x-1.5 rounded-lg px-3 py-1.5 transition-colors text-zinc-400" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                        <MessageCircle className="w-4 h-4" />
+                        <span className="text-[13px] font-medium">{Math.floor(Math.random() * 10) + 1}</span>
                       </button>
                     </div>
-
-                    {/* Status Badge */}
-                    <div className="mt-3">
-                      <div
-                        className={`text-[12px] font-bold tracking-tight uppercase ${item.statusDisplay.color} flex items-center space-x-1 bg-white border border-current/10 px-2 py-1 rounded-md`}
-                      >
-                        <span>{item.statusDisplay.emoji}</span>
-                        <span className="ml-1">{item.statusDisplay.label}</span>
-                      </div>
+                    <div className={`text-[11px] font-bold tracking-tight uppercase ${item.statusDisplay.color} flex items-center space-x-1 px-2 py-1 rounded-md`} style={{ background: 'rgba(255,255,255,0.05)' }}>
+                      <span>{item.statusDisplay.emoji}</span>
+                      <span className="ml-1">{item.statusDisplay.label}</span>
                     </div>
                   </div>
                 </div>
